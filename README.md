@@ -36,5 +36,6 @@ Possible use cases are as follows.
 * The user uploads a file to one of his devices.
 * The user establishes a regular synchronization of folders between a portable device and a device inside his private network.
 * The user turns on a device using wake on lan.
-* The user sends commands to a smart home device.
+* The user runs preconfigured scripts and programs on one of his devices.
+* The user controls a smart home device, like setting the room temperature.
 * The user retrieves data from a smart home device, like a webcam or a thermostat.
