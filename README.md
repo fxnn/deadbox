@@ -51,6 +51,15 @@ the _private agent_ suffers under limited availability and increased configurati
   However, this could be circumvented by letting the commander cache encrypted responses to selected requests.
 * The user needs to install, configure and maintain instances on at least two different devices.
 
+## Challenges
+* While the agent needs to open the connection to the controller,
+  the controller must be able to push requests to the agent, so that the user won't expect a high latency.
+  Similarly, the agent must also be able to push his responses back to the controller.
+* When thinking about authentication, it is clear that the agent should not need to trust the controller.
+  Otherwise, in terms of security, the controller would be a single point of failure.
+  Instead, it would be better if both could rely on a common third party for establishing authentication,
+  as it is possible with e.g. OpenID.
+
 ## Use cases and examples
 The _private agent_ could be used in following scenarios.
 * A user wants to access his home NAS from the internet, while retaining a high level of security.
