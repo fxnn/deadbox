@@ -76,3 +76,44 @@ Possible use cases are as follows.
 * The user runs preconfigured scripts and programs on one of his devices.
 * The user controls a smart home device, like setting the room temperature.
 * The user retrieves data from a smart home device, like a webcam or a thermostat.
+
+## Specification
+
+### Command Line Interface
+
+The main program is `privage-agent`, providing at least the following arguments.
+
+* `-agent /path/to/agent.yml` makes the pocess act as an agent, connecting to a controller and waiting for commands.
+* `-commander /path/to/commander.yml` makes the process act as a controller, opening a port providing a REST interface for both users and agents.
+* `-auth /path/to/auth.yml` configures authentication for both agent and controller.
+
+### `agent.yml`
+
+The file `agent.yml` contains the configuration for an agent.
+It must configure at least the following aspects.
+
+* A textual identifier of the agent instance. Should be unique amongst all agents on the same controller.
+* URL of one (or even multiple) controllers.
+* A reference to a private (and possibly public) key file, used to decrypt received messages and to identify the agent's instance against a commander.
+* Enabled receivers, with the appropriate configuration for each.
+ * A file system receiver must be configured with the file system location, include/exclude patterns and allowed/disallowed operations.
+ * An executing receiver must be configured with the command to execute when invoked.
+ * Per receiver, it must be possible to enable/disable it for individual authenticated users.
+
+### `commander.yml`
+
+The file `commander.yml` contains the configuration for a commander.
+It must configure at least the following aspects.
+
+* Hostname and port to bind on.
+* A whitelist of allowed agents, identified by a fingerprint of their key.
+
+### `auth.yml`
+
+The file `auth.yml` configures the authentication method to be used by both agents and commanders.
+It must contain at least the following information.
+
+* Authentication method to be used, e.g. htpasswd file or OAuth 2.0 server.
+* Parameters for the authentication method, e.g. location of the passwd file or URL and access data to the OAuth 2.0 server.
+ * Note, that commander and agent might need different parameters.
+   While the commander must be able to establish user authentication, the agent must simply be able to consume a request.
