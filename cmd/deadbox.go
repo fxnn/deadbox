@@ -1,7 +1,13 @@
 package main
 
-import "github.com/fxnn/deadbox/config"
+import (
+	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/drop"
+)
 
 func main() {
-	_ := config.Dummy()
+	cfg := config.Dummy()
+	for _, dp := range cfg.Drops {
+		drop.NewServer(dp.ListenAddress)
+	}
 }
