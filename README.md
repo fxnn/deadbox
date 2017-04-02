@@ -1,7 +1,7 @@
-# Private Agent
+# Deadbox
 Access data and devices in your private network without Dynamic DNS, port opening etc.
 
-**Note:** This is a _concept_, still without implementation!
+**Note:** This is a _concept_, implementation pending!
 I'm very happy to hear your feedback and ideas. Simply file an issue!
 
 ## Problem
@@ -15,15 +15,19 @@ When a user wants to access his private data from the internet, he currently has
 It would be better, if the user wouldn't need to neither store his data on foreign servers, nor open his private network to the public internet.
 
 ## Approach
-_Private Agent_ is an application that combines the concepts of peer to peer and message bus to establish communication between public and private networks.
-It consists of two parts: _agents_ and _commanders_.
-* The agent runs on devices in your private network and connects to the commander,
+_Deadbox_ is an application that combines the concepts of peer to peer and 
+message bus to establish communication between public and private networks.
+It consists of two parts: _workers_ and _drops_.
+* The worker runs on devices in your private network and connects to the
+  drop,
   which is located on a machine somewhere publicy available.
-* The user accesses the commander through a web-based UI,
-  sending usecase based requests like "search for a file by name" or "upload a file".
-  The commander stores the requests in a queue.
-* The client processes all requests from the queue and sends the answer back to the commander,
-  which provides the results to the user.
+* The user accesses the drop through a web-based UI,
+  sending usecase based requests like "search for a file by name" or
+  "upload a file".
+  The drop stores the requests in a queue.
+* The worker requests all items in his queue from the drop,
+  processes them and sends the answers back to the drop.
+* Finally, the user loads the results from the drop.
 
 ## Advantages
 The user's experience is similar to that of a typical cloud application.
@@ -39,29 +43,42 @@ Still, the system provides more security, due to the following reasons.
 * Moreover, using public key cryptography, end-to-end encyption can be used.
   Then, the server can't see the data at all.
 
-By combining agent and commander in one single binary and adding some basic routing,
-a peer to peer network emerges, allowing to combine agents from different private networks
-using tree-like or even chaotic structures.
-This offers a high flexibility in retrieving data and sending commands from/to private devices.
+By combining worker and drop in one single binary and adding some basic routing,
+a peer to peer network emerges, allowing to combine workers from different 
+private networks using tree-like or even rather random structures.
+One deadbox instance could serve as worker and drop at the same time, loading
+requests from foreign drops, providing them to other workers.
+This offers a high flexibility in retrieving data and sending commands from/to
+private devices.
 
 ## Disadvantages
 Compared to a centralized cloud-based storage solution,
-the _private agent_ suffers under limited availability and increased configuration effort.
-* The service is only available when the devices in the private network are on and connected.
-  However, this could be circumvented by letting the commander cache encrypted responses to selected requests.
-* The user needs to install, configure and maintain instances on at least two different devices.
+the _deadbox_ suffers under limited availability and increased configuration 
+effort.
+* The service is only available when the devices in the private network are on
+  and connected.
+  However, this could be circumvented by letting the drop not only store the
+  encrypted requests, but also the encrypted responses for some limited time.
+  Of course, this is not feasible in all use cases.
+* The user needs to install, configure and maintain instances on at least two
+  different devices.
+  This could be circumvented by providing a central cloud service, maybe on a
+  subscription base.
 
 ## Challenges
-* While the agent needs to open the connection to the controller,
-  the controller must be able to push requests to the agent, so that the user won't expect a high latency.
-  Similarly, the agent must also be able to push his responses back to the controller.
-* When thinking about authentication, it is clear that the agent should not need to trust the controller.
-  Otherwise, in terms of security, the controller would be a single point of failure.
-  Instead, it would be better if both could rely on a common third party for establishing authentication,
-  as it is possible with e.g. OpenID.
+* While the worker needs to open the connection to the drop,
+  the drop must be able to push requests to the worker, so that the user won't 
+  experience a high latency.
+  Similarly, the worker must be able to push his responses back to the drop and
+  thus to the user.
+* When thinking about authentication, it is clear that the worker should not 
+  need to trust the drop.
+  Otherwise, in terms of security, the drop would be a single point of failure.
+  Instead, it would be better if both could rely on a common third party for 
+  establishing authentication, as it is possible with e.g. OpenID.
 
 ## Use cases and examples
-The _private agent_ could be used in following scenarios.
+The _deadbox_ could be used in following scenarios.
 * A user wants to access his home NAS from the internet, while retaining a high level of security.
 * A user wants to orchestrate smart home devices.
 * A company wants to access and control multiple devices in different networks from a single interface. 
@@ -81,52 +98,61 @@ Possible use cases are as follows.
 
 ### Command Line Interface
 
-The main program is `privage-agent`, providing at least the following arguments.
+The main program is `deadbox`, providing at least the following arguments.
 
-* `-agent /path/to/agent.yml` makes the pocess act as an agent, connecting to a controller and waiting for commands.
-* `-commander /path/to/commander.yml` makes the process act as a controller, opening a port providing a REST interface for both users and agents.
-* `-auth /path/to/auth.yml` configures authentication for both agent and controller.
+* `-worker /path/to/worker.yml` makes the pocess act as an worker, connecting 
+  to a drop and waiting for commands.
+* `-drop /path/to/drop.yml` makes the process act as a drop, opening 
+  a port providing a REST interface for both users and workers.
+* `-auth /path/to/auth.yml` configures authentication for both workers and
+  drops.
 
-### `agent.yml`
+### `worker.yml`
 
-The file `agent.yml` contains the configuration for an agent.
+The file `worker.yml` contains the configuration for an worker.
 It must configure at least the following aspects.
 
-* A textual identifier of the agent instance. Should be unique amongst all agents on the same controller.
-* URL of one (or even multiple) controllers.
-* A reference to a private (and possibly public) key file, used to decrypt received messages and to identify the agent's instance against a commander.
+* A textual identifier of the worker instance.
+Should be unique amongst all workers on the same drop.
+* URL of one (or even multiple) drops.
+* A reference to a private (and possibly public) key file, used to decrypt 
+  received messages and to identify the worker's instance against a drop.
 * Enabled receivers, with the appropriate configuration for each.
  * A file system receiver must be configured with the file system location, include/exclude patterns and allowed/disallowed operations.
  * An executing receiver must be configured with the command to execute when invoked.
  * Per receiver, it must be possible to enable/disable it for individual authenticated users.
 
-### `commander.yml`
+### `drop.yml`
 
-The file `commander.yml` contains the configuration for a commander.
+The file `drop.yml` contains the configuration for a drop.
 It must configure at least the following aspects.
 
 * Hostname and port to bind on.
-* A whitelist of allowed agents, identified by a fingerprint of their key.
+* A whitelist of allowed workers, identified by a fingerprint of their key.
 
 ### `auth.yml`
 
-The file `auth.yml` configures the authentication method to be used by both agents and commanders.
+The file `auth.yml` configures the authentication method to be used by both 
+workers and drops.
 It must contain at least the following information.
 
 * Authentication method to be used, e.g. htpasswd file or OAuth 2.0 server.
 * Parameters for the authentication method, e.g. location of the passwd file or URL and access data to the OAuth 2.0 server.
- * Note, that commander and agent might need different parameters.
-   While the commander must be able to establish user authentication, the agent must simply be able to consume a request.
+ * Note, that drop and worker might need different parameters.
+   While the drop must be able to establish user authentication, the worker 
+   must simply be able to consume a request.
 
 ### REST interface
 
-The commander offers a REST interface to be consumed by users and agents.
+The drop offers a REST interface to be consumed by users and workers.
 It will provide at least the following endpoints.
 
-* `GET /queue/{agentId}` lets an agent retrieve all pending requests targeted
+* `GET /queue/{workerId}` lets an worker retrieve all pending requests targeted
   to him.
-* `PUT /queue/{agentId}/{requestId}` allows users to file a new request targeted
-  to an agent.
-* `PUT /agent/{agentId}` lets an agent register with the commander or update his
-  information.
-* `GET /agent/` allows users to retrieve all agents available to him.
+* `PUT /queue/{workerId}/{requestId}` allows users to file a new request 
+  targeted to an worker.
+  This endpoint is idempotent.
+* `PUT /worker/{workerId}` lets an worker register with the drop or update
+  his information.
+  This endpoint is idempotent.
+* `GET /worker/` allows users to retrieve all workers available to him.

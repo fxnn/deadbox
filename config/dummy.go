@@ -3,16 +3,16 @@ package config
 import "net/url"
 
 func Dummy() *Application {
-	commanderUrl, _ := url.Parse("http://localhost:6545")
-	a := Agent{
-		CommanderUrls: []*url.URL{commanderUrl},
+	dropUrl, _ := url.Parse("http://localhost:6545")
+	w := Worker{
+		DropUrls: []*url.URL{dropUrl},
 	}
-	c := Commander{
+	d := Drop{
 		ListenAddress: ":6545",
 	}
 	app := &Application{
-		Agents:     []Agent{a},
-		Commanders: []Commander{c},
+		Workers: []Worker{w},
+		Drops:   []Drop{d},
 	}
 	return app
 }

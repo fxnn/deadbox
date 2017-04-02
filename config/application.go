@@ -3,10 +3,10 @@ package config
 // Application configuration, created once in application lifecycle.
 type Application struct {
 
-	// Agents configured in this application
-	Agents []Agent
+	// Workers configured in this application
+	Workers []Worker
 
-	// Commanders configured in this application
-	Commanders []Commander
+	// Drops configured in this application
+	Drops []Drop
 
 }
