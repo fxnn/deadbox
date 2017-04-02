@@ -147,12 +147,41 @@ It must contain at least the following information.
 The drop offers a REST interface to be consumed by users and workers.
 It will provide at least the following endpoints.
 
-* `GET /queue/{workerId}` lets an worker retrieve all pending requests targeted
-  to him.
-* `PUT /queue/{workerId}/{requestId}` allows users to file a new request 
-  targeted to an worker.
-  This endpoint is idempotent.
-* `PUT /worker/{workerId}` lets an worker register with the drop or update
+* `GET /worker/` allows users to retrieve all workers available to him.
+* `PUT /worker/{workerId}` lets a worker register with the drop or update
   his information.
   This endpoint is idempotent.
-* `GET /worker/` allows users to retrieve all workers available to him.
+* `GET /worker/{workerId}/request` lets a worker retrieve all pending requests 
+  targeted to him.
+* `PUT /worker/{workerId}/request/{requestId}` allows users to file a new 
+  request targeted to an worker.
+  This endpoint is idempotent.
+* `PUT /worker/{workerId}/response/{requestId}` is called by a worker to
+  transport the response to a request.
+  This endpoint is idempotent.
+* `GET /worker/{workerId}/response/{requestId}` allows users to retrieve the
+  response to a previously filed request, if already available.
+
+As for a worker entry, at least the following information need to be contained.
+
+* The worker's unique identification.
+* The request types supported by the worker, given as URN.
+* The worker's public key, used to encrypt the requests.
+
+As for a queue entry, which is a request, at least the following information
+need to be contained.
+
+* The request's unique identification.
+* The request type, given as URN.
+* The request payload.
+* If we want to apply routing over multiple hops, we might also need a unique
+  identifier of the originating drop, and possibly an ordered list of all
+  drops that transported the request.
+
+As for a response, at least the following information need to be contained.
+
+* The original request's unique identification.
+* The response payload.
+* If we want to apply routing over multiple hops, we might also need a unique
+  identifier of the originating drop, and possibly an ordered list of all drops
+  that are still to address.
