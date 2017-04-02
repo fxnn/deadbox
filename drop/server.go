@@ -1,10 +1,9 @@
 package drop
 
 import (
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -21,26 +20,26 @@ func (s *Server) Serve() {
 
 func (s *Server) newRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.Path("/queue/{workerId}").
-		HandlerFunc(s.handleGetWorkerQueue).
-		Methods("GET")
-	r.Path("/queue/{workerId}/{requestId}").
-		HandlerFunc(s.handlePutRequestIntoWorkerQueue).
-		Methods("PUT")
-	r.Path("/worker/{workerId}").
-		HandlerFunc(s.handlePutWorker).
-		Methods("PUT")
 	r.Path("/worker").
 		HandlerFunc(s.handleGetAllWorkers).
 		Methods("GET")
+	r.Path("/worker/{workerId}").
+		HandlerFunc(s.handlePutWorker).
+		Methods("PUT")
+	r.Path("/worker/{workerId}/request").
+		HandlerFunc(s.handleGetAllWorkerRequests).
+		Methods("GET")
+	r.Path("/worker/{workerId}/request/{requestId}").
+		HandlerFunc(s.handlePutWorkerRequest).
+		Methods("PUT")
 	return r
 }
 
-func (s *Server) handleGetWorkerQueue(http.ResponseWriter, *http.Request) {
+func (s *Server) handleGetAllWorkerRequests(http.ResponseWriter, *http.Request) {
 	// FIXME Implement me!
 }
 
-func (s *Server) handlePutRequestIntoWorkerQueue(http.ResponseWriter,
+func (s *Server) handlePutWorkerRequest(http.ResponseWriter,
 	*http.Request) {
 	// FIXME Implement me!
 }
