@@ -117,3 +117,16 @@ It must contain at least the following information.
 * Parameters for the authentication method, e.g. location of the passwd file or URL and access data to the OAuth 2.0 server.
  * Note, that commander and agent might need different parameters.
    While the commander must be able to establish user authentication, the agent must simply be able to consume a request.
+
+### REST interface
+
+The commander offers a REST interface to be consumed by users and agents.
+It will provide at least the following endpoints.
+
+* `GET /queue/{agentId}` lets an agent retrieve all pending requests targeted
+  to him.
+* `PUT /queue/{agentId}/{requestId}` allows users to file a new request targeted
+  to an agent.
+* `PUT /agent/{agentId}` lets an agent register with the commander or update his
+  information.
+* `GET /agent/` allows users to retrieve all agents available to him.
