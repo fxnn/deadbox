@@ -1,10 +1,10 @@
 package drop
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"log"
 )
 
 type Server struct {
@@ -21,12 +21,18 @@ func (s *Server) Serve() {
 
 func (s *Server) newRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/queue/{workerId}", s.handleGetWorkerQueue).
+	r.Path("/queue/{workerId}").
+		HandlerFunc(s.handleGetWorkerQueue).
 		Methods("GET")
-	r.HandleFunc("/queue/{workerId}/{requestId}",
-		s.handlePutRequestIntoWorkerQueue).Methods("PUT")
-	r.HandleFunc("/worker/{workerId}", s.handlePutWorker).Methods("PUT")
-	r.HandleFunc("/worker", s.handleGetAllWorkers).Methods("GET")
+	r.Path("/queue/{workerId}/{requestId}").
+		HandlerFunc(s.handlePutRequestIntoWorkerQueue).
+		Methods("PUT")
+	r.Path("/worker/{workerId}").
+		HandlerFunc(s.handlePutWorker).
+		Methods("PUT")
+	r.Path("/worker").
+		HandlerFunc(s.handleGetAllWorkers).
+		Methods("GET")
 	return r
 }
 
