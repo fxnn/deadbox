@@ -30,6 +30,7 @@ func main() {
 
 	log.Println("Shutting down gracefully")
 	db.Close()
+	// TODO: Graceful HTTP shutdown with Go1.8
 }
 
 func openDb(cfg *config.Application) *bolt.DB {
