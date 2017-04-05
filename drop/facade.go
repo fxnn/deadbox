@@ -7,11 +7,12 @@ import "github.com/boltdb/bolt"
 // As a facade, it redirects the method calls to the actual implementing
 // structs.
 type facade struct {
-	db *bolt.DB
+	name string
+	db   *bolt.DB
 }
 
-func New(db *bolt.DB) model.Drop {
-	return &facade{db}
+func New(name string, db *bolt.DB) model.Drop {
+	return &facade{name, db}
 }
 
 func (*facade) Workers() []model.Worker {

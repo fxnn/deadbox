@@ -2,7 +2,6 @@ package rest
 
 import (
 	"github.com/fxnn/deadbox/model"
-	"log"
 	"net/http"
 )
 
@@ -15,6 +14,6 @@ func NewServer(addr string, drop model.Drop) *Server {
 	return &Server{addr: addr, router: newRouter(drop)}
 }
 
-func (s *Server) Serve() {
-	log.Fatal(http.ListenAndServe(s.addr, s.router))
+func (s *Server) Serve() error {
+	return http.ListenAndServe(s.addr, s.router)
 }
