@@ -13,7 +13,7 @@ func Dummy() *Application {
 		ListenAddress: ":" + DefaultPort,
 	}
 	app := &Application{
-		DbFile:  "deadbox.boltdb",
+		DbPath:  "./",
 		Workers: []Worker{w},
 		Drops:   []Drop{d},
 	}

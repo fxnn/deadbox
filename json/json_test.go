@@ -1,4 +1,4 @@
-package rest
+package json
 
 import (
 	"github.com/fxnn/deadbox/model"
@@ -6,9 +6,9 @@ import (
 )
 
 func TestJsonWorker_Interface(*testing.T) {
-	var _ model.Worker = &jsonWorker{}
+	var _ model.Worker = &Worker{}
 }
 
 func TestJsonWorkerRequest_Interface(*testing.T) {
-	var _ model.WorkerRequest = &jsonWorkerRequest{}
+	var _ model.WorkerRequest = &WorkerRequest{}
 }

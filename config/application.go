@@ -7,8 +7,8 @@ const DefaultPort = "6545"
 
 // Application configuration, created once in application lifecycle.
 type Application struct {
-	// DbFile points to a file were the database is stored
-	DbFile string
+	// DbPath points to a directory were the database files are stored in.
+	DbPath string
 
 	// Workers configured in this application
 	Workers []Worker
