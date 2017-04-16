@@ -6,11 +6,15 @@ import (
 	"time"
 )
 
-func TestWorkerMarshalAndUnmarshal(t *testing.T) {
+func TestWorker2Json(t *testing.T) {
 	var err error
 	var expectedId WorkerId = "id"
+	var expectedTimeout time.Time = time.Now()
 
-	bytes, err := json.Marshal(&Worker{Id: expectedId, Timeout: time.Now()})
+	bytes, err := json.Marshal(&Worker{
+		Id:      expectedId,
+		Timeout: expectedTimeout,
+	})
 	if err != nil {
 		t.Fatal("couldn't marshal worker: ", err)
 	}
@@ -23,6 +27,11 @@ func TestWorkerMarshalAndUnmarshal(t *testing.T) {
 	}
 
 	if worker.Id != expectedId {
-		t.Fatalf("expected id %v, but got %v", expectedId, worker.Id)
+		t.Fatalf("expected id %v, but got %v",
+			expectedId, worker.Id)
+	}
+	if worker.Timeout != expectedTimeout {
+		t.Fatalf("expected timeout %v, but got %v",
+			expectedTimeout, worker.Timeout)
 	}
 }
