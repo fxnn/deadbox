@@ -53,7 +53,7 @@ func (r *router) handleGetAllWorkers(
 ) {
 	r.outputJson(rw)
 	result := r.drop.Workers()
-	err := jsonenc.NewEncoder(rw).Encode(json.NewWorkers(result))
+	err := jsonenc.NewEncoder(rw).Encode(json.AsWorkers(result))
 	if err != nil {
 		log.Println("Couldn't serialize worker:", err)
 	}
@@ -78,7 +78,7 @@ func (r *router) handleGetAllWorkerRequests(
 	r.outputJson(rw)
 	var workerId model.WorkerId = r.workerId(rq)
 	result := r.drop.WorkerRequests(workerId)
-	jsonenc.NewEncoder(rw).Encode(json.NewWorkerRequests(result))
+	jsonenc.NewEncoder(rw).Encode(json.AsWorkerRequests(result))
 }
 
 func (r *router) handlePutWorkerRequest(

@@ -6,24 +6,27 @@ import (
 )
 
 type Worker struct {
-	id      string
-	timeout time.Time
+	IdVal      string
+	TimeoutVal time.Time
 }
 
 func (w *Worker) Id() model.WorkerId {
-	return model.WorkerId(w.id)
+	return model.WorkerId(w.IdVal)
 }
 func (w *Worker) Timeout() time.Time {
-	return w.timeout
+	return w.TimeoutVal
 }
 
-func NewWorker(worker model.Worker) Worker {
-	return Worker{id: string(worker.Id()), timeout: worker.Timeout()}
-}
-func NewWorkers(workers []model.Worker) []Worker {
-	result := make([]Worker, len(workers))
+func AsWorkers(workers []model.Worker) []*Worker {
+	result := make([]*Worker, len(workers))
 	for i, worker := range workers {
-		result[i] = NewWorker(worker)
+		result[i] = AsWorker(worker)
 	}
 	return result
+}
+func AsWorker(worker model.Worker) *Worker {
+	return &Worker{IdVal: string(worker.Id()), TimeoutVal: worker.Timeout()}
+}
+func NewWorker(id string, timeout time.Time) *Worker {
+	return &Worker{IdVal: id, TimeoutVal: timeout}
 }

@@ -26,12 +26,13 @@ func (w *workers) Workers() []model.Worker {
 	err = w.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(workerBucketName))
 		if b == nil {
+			log.Debugln("no worker bucket in db")
 			return nil
 		}
 
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var worker *json.Worker
+			var worker *json.Worker = new(json.Worker)
 			if err := jsonenc.Unmarshal(v, worker); err != nil {
 				return err
 			}
@@ -41,7 +42,7 @@ func (w *workers) Workers() []model.Worker {
 		return nil
 	})
 	if err != nil {
-		log.Debugln("Error reading Workers:", err)
+		log.Debugln("error reading workers:", err)
 	}
 	return result
 }
@@ -57,9 +58,13 @@ func (w *workers) PutWorker(worker model.Worker) {
 				workerBucketName, err)
 		}
 
-		v, err := jsonenc.Marshal(json.NewWorker(worker))
+		v, err := jsonenc.Marshal(json.AsWorker(worker))
 		if err != nil {
 			return fmt.Errorf("couldn't marshal worker: %v", err)
+		}
+		if v == nil {
+			return fmt.Errorf("unexpected nil for key %v",
+				worker.Id())
 		}
 
 		err = b.Put([]byte(worker.Id()), v)
@@ -67,11 +72,10 @@ func (w *workers) PutWorker(worker model.Worker) {
 			return fmt.Errorf("couldn't store worker %v: %v",
 				v, err)
 		}
-
 		return nil
 	})
 	if err != nil {
-		log.Debugln("Error putting worker:", err)
+		log.Debugln("error putting worker:", err)
 		// TODO: Return error, so that we can return a 500
 	}
 }

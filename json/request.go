@@ -17,13 +17,13 @@ func (r *WorkerRequest) Timeout() time.Time {
 	return r.timeout
 }
 
-func NewWorkerRequest(request model.WorkerRequest) WorkerRequest {
+func AsWorkerRequest(request model.WorkerRequest) WorkerRequest {
 	return WorkerRequest{id: string(request.Id()), timeout: request.Timeout()}
 }
-func NewWorkerRequests(requests []model.WorkerRequest) []WorkerRequest {
+func AsWorkerRequests(requests []model.WorkerRequest) []WorkerRequest {
 	result := make([]WorkerRequest, len(requests))
 	for i, request := range requests {
-		result[i] = NewWorkerRequest(request)
+		result[i] = AsWorkerRequest(request)
 	}
 	return result
 }
