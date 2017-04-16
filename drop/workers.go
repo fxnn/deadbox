@@ -1,10 +1,9 @@
 package drop
 
 import (
-	jsonenc "encoding/json"
+	"encoding/json"
 	"fmt"
 	"github.com/boltdb/bolt"
-	"github.com/fxnn/deadbox/json"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/gone/log"
 )
@@ -32,8 +31,8 @@ func (w *workers) Workers() []model.Worker {
 
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var worker *json.Worker = new(json.Worker)
-			if err := jsonenc.Unmarshal(v, worker); err != nil {
+			var worker model.Worker
+			if err := json.Unmarshal(v, &worker); err != nil {
 				return err
 			}
 			result = append(result, worker)
@@ -47,7 +46,7 @@ func (w *workers) Workers() []model.Worker {
 	return result
 }
 
-func (w *workers) PutWorker(worker model.Worker) {
+func (w *workers) PutWorker(worker *model.Worker) {
 	var err error
 	// TODO: Validate name, and also the rest of the object
 
@@ -58,16 +57,16 @@ func (w *workers) PutWorker(worker model.Worker) {
 				workerBucketName, err)
 		}
 
-		v, err := jsonenc.Marshal(json.AsWorker(worker))
+		v, err := json.Marshal(worker)
 		if err != nil {
 			return fmt.Errorf("couldn't marshal worker: %v", err)
 		}
 		if v == nil {
 			return fmt.Errorf("unexpected nil for key %v",
-				worker.Id())
+				string(worker.Id))
 		}
 
-		err = b.Put([]byte(worker.Id()), v)
+		err = b.Put([]byte(worker.Id), v)
 		if err != nil {
 			return fmt.Errorf("couldn't store worker %v: %v",
 				v, err)

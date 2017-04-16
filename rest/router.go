@@ -1,9 +1,8 @@
 package rest
 
 import (
-	jsonenc "encoding/json"
+	"encoding/json"
 	"fmt"
-	"github.com/fxnn/deadbox/json"
 	"github.com/fxnn/deadbox/model"
 	"github.com/gorilla/mux"
 	"log"
@@ -53,7 +52,7 @@ func (r *router) handleGetAllWorkers(
 ) {
 	r.outputJson(rw)
 	result := r.drop.Workers()
-	err := jsonenc.NewEncoder(rw).Encode(json.AsWorkers(result))
+	err := json.NewEncoder(rw).Encode(result)
 	if err != nil {
 		log.Println("Couldn't serialize worker:", err)
 	}
@@ -63,8 +62,8 @@ func (r *router) handlePutWorker(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	var worker *json.Worker = &json.Worker{}
-	if err := jsonenc.NewDecoder(rq.Body).Decode(worker); err != nil {
+	var worker *model.Worker = &model.Worker{}
+	if err := json.NewDecoder(rq.Body).Decode(worker); err != nil {
 		r.requestInvalid(rw, err)
 		return
 	}
@@ -78,14 +77,14 @@ func (r *router) handleGetAllWorkerRequests(
 	r.outputJson(rw)
 	var workerId model.WorkerId = r.workerId(rq)
 	result := r.drop.WorkerRequests(workerId)
-	jsonenc.NewEncoder(rw).Encode(json.AsWorkerRequests(result))
+	json.NewEncoder(rw).Encode(result)
 }
 
 func (r *router) handlePutWorkerRequest(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	var request *json.WorkerRequest
-	jsonenc.NewDecoder(rq.Body).Decode(request)
+	var request *model.WorkerRequest
+	json.NewDecoder(rq.Body).Decode(request)
 	r.drop.PutWorkerRequest(request)
 }

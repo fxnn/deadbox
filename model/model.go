@@ -6,27 +6,27 @@ import "time"
 // requests and responses.
 type Drop interface {
 	Workers() []Worker
-	PutWorker(Worker)
+	PutWorker(*Worker)
 
 	WorkerRequests(WorkerId) []WorkerRequest
-	PutWorkerRequest(WorkerRequest)
+	PutWorkerRequest(*WorkerRequest)
 
 	WorkerResponse(WorkerRequestId) []WorkerResponse
-	PutWorkerResponse(WorkerResponse)
+	PutWorkerResponse(*WorkerResponse)
 }
 
 type WorkerId string
-type Worker interface {
-	Id() WorkerId
-	Timeout() time.Time
+type Worker struct {
+	Id      WorkerId
+	Timeout time.Time
 }
 
 type WorkerRequestId string
-type WorkerRequest interface {
-	Id() WorkerRequestId
-	Timeout() time.Time
+type WorkerRequest struct {
+	Id      WorkerRequestId
+	Timeout time.Time
 }
-type WorkerResponse interface {
-	Id() WorkerRequestId
-	Timeout() time.Time
+type WorkerResponse struct {
+	Id      WorkerRequestId
+	Timeout time.Time
 }

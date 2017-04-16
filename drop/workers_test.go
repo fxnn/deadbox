@@ -2,7 +2,6 @@ package drop
 
 import (
 	"github.com/boltdb/bolt"
-	"github.com/fxnn/deadbox/json"
 	"github.com/fxnn/deadbox/model"
 	"os"
 	"testing"
@@ -21,8 +20,8 @@ func TestPutAndGet(t *testing.T) {
 
 	sut = newWorkers(db)
 
-	var given model.Worker = json.NewWorker("id", time.Now())
-	sut.PutWorker(given)
+	var given model.Worker = model.Worker{"id", time.Now()}
+	sut.PutWorker(&given)
 
 	var results []model.Worker = sut.Workers()
 	if len(results) != 1 {
@@ -30,8 +29,8 @@ func TestPutAndGet(t *testing.T) {
 			results)
 	}
 	var result model.Worker = results[0]
-	if result.Id() != "id" {
-		t.Fatalf("got id %v", result.Id())
+	if result.Id != "id" {
+		t.Fatalf("got id %v", string(result.Id))
 	}
 }
 

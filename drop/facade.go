@@ -22,7 +22,7 @@ func (f *facade) Workers() []model.Worker {
 	return f.workers.Workers()
 }
 
-func (f *facade) PutWorker(w model.Worker) {
+func (f *facade) PutWorker(w *model.Worker) {
 	f.workers.PutWorker(w)
 }
 
@@ -30,7 +30,7 @@ func (*facade) WorkerRequests(model.WorkerId) []model.WorkerRequest {
 	panic("implement me")
 }
 
-func (*facade) PutWorkerRequest(model.WorkerRequest) {
+func (*facade) PutWorkerRequest(*model.WorkerRequest) {
 	panic("implement me")
 }
 
@@ -38,6 +38,6 @@ func (*facade) WorkerResponse(model.WorkerRequestId) []model.WorkerResponse {
 	panic("implement me")
 }
 
-func (*facade) PutWorkerResponse(model.WorkerResponse) {
+func (*facade) PutWorkerResponse(*model.WorkerResponse) {
 	panic("implement me")
 }

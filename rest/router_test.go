@@ -38,7 +38,7 @@ func (*mockDrop) Workers() []model.Worker {
 	return make([]model.Worker, 0)
 }
 
-func (*mockDrop) PutWorker(model.Worker) {
+func (*mockDrop) PutWorker(*model.Worker) {
 	// no-op
 }
 
@@ -46,7 +46,7 @@ func (*mockDrop) WorkerRequests(model.WorkerId) []model.WorkerRequest {
 	return make([]model.WorkerRequest, 0)
 }
 
-func (*mockDrop) PutWorkerRequest(model.WorkerRequest) {
+func (*mockDrop) PutWorkerRequest(*model.WorkerRequest) {
 	// no-op
 }
 
@@ -54,6 +54,6 @@ func (*mockDrop) WorkerResponse(model.WorkerRequestId) []model.WorkerResponse {
 	return make([]model.WorkerResponse, 0)
 }
 
-func (*mockDrop) PutWorkerResponse(model.WorkerResponse) {
+func (*mockDrop) PutWorkerResponse(*model.WorkerResponse) {
 	// no-op
 }
