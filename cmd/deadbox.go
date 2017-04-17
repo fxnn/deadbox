@@ -7,6 +7,7 @@ import (
 	"github.com/fxnn/deadbox/drop"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/rest"
+	"github.com/fxnn/deadbox/worker"
 	"log"
 	"os"
 	"os/signal"
@@ -24,6 +25,10 @@ func main() {
 		go serveDrop(dp, cfg)
 	}
 
+	for _, wk := range cfg.Workers {
+		go runWorker(wk, cfg)
+	}
+
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	log.Println(<-ch)
@@ -32,11 +37,19 @@ func main() {
 	// TODO: Graceful HTTP shutdown with Go1.8
 }
 
+func runWorker(wcfg config.Worker, acfg *config.Application) {
+	var b *bolt.DB = openDb(acfg, wcfg.Name)
+	defer closeDb(b)
+
+	var runWorker func() error = worker.New(wcfg, b)
+	log.Fatalln(runWorker())
+}
+
 func serveDrop(dcfg config.Drop, acfg *config.Application) {
 	var b *bolt.DB = openDb(acfg, dcfg.Name)
 	defer closeDb(b)
 
-	var dp model.Drop = drop.New(dcfg.Name, b)
+	var dp model.Drop = drop.New(dcfg, b)
 	log.Println("Drop", dcfg.Name, "listening on", dcfg.ListenAddress)
 	log.Fatalln(rest.NewServer(dcfg.ListenAddress, dp).Serve())
 }

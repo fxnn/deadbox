@@ -5,8 +5,8 @@ import "time"
 // Drop defines the interface for a drop, able to manage workers and store their
 // requests and responses.
 type Drop interface {
-	Workers() []Worker
-	PutWorker(*Worker)
+	Workers() ([]Worker, error)
+	PutWorker(*Worker) error
 
 	WorkerRequests(WorkerId) []WorkerRequest
 	PutWorkerRequest(*WorkerRequest)

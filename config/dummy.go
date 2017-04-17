@@ -5,8 +5,8 @@ import "net/url"
 func Dummy() *Application {
 	dropUrl, _ := url.Parse("http://localhost:" + DefaultPort)
 	w := Worker{
-		Name:     "Default Worker",
-		DropUrls: []*url.URL{dropUrl},
+		Name:    "Default Worker",
+		DropUrl: dropUrl,
 	}
 	d := Drop{
 		Name:          "Default Drop",

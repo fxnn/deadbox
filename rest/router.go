@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fxnn/deadbox/model"
 	"github.com/gorilla/mux"
-	"log"
 	"net/http"
 )
 
@@ -42,8 +41,13 @@ func (r *router) outputJson(rw http.ResponseWriter) {
 }
 func (r *router) requestInvalid(rw http.ResponseWriter, err error) {
 	rw.Header().Set("Content-Type", "text/plain")
-	rw.WriteHeader(400)
-	fmt.Fprintf(rw, "Your request was invalid: %v", err)
+	rw.WriteHeader(http.StatusBadRequest)
+	fmt.Fprintf(rw, "Your request was invalid: %s", err)
+}
+func (r *router) internalServerError(rw http.ResponseWriter, err error) {
+	rw.Header().Set("Content-Type", "text/plain")
+	rw.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(rw, "Couldn't handle your request: %s", err)
 }
 
 func (r *router) handleGetAllWorkers(
@@ -51,10 +55,16 @@ func (r *router) handleGetAllWorkers(
 	rq *http.Request,
 ) {
 	r.outputJson(rw)
-	result := r.drop.Workers()
-	err := json.NewEncoder(rw).Encode(result)
+	result, err := r.drop.Workers()
 	if err != nil {
-		log.Println("Couldn't serialize worker:", err)
+		r.internalServerError(rw, fmt.Errorf("couldn't get workers: %s", err))
+		return
+	}
+
+	err = json.NewEncoder(rw).Encode(result)
+	if err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't serialize workers: %s", err))
+		return
 	}
 }
 
@@ -67,7 +77,10 @@ func (r *router) handlePutWorker(
 		r.requestInvalid(rw, err)
 		return
 	}
-	r.drop.PutWorker(worker)
+	if err := r.drop.PutWorker(worker); err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't put worker: %s", err))
+		return
+	}
 }
 
 func (r *router) handleGetAllWorkerRequests(

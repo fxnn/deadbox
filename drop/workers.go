@@ -18,7 +18,7 @@ func newWorkers(db *bolt.DB) *workers {
 	return &workers{db}
 }
 
-func (w *workers) Workers() []model.Worker {
+func (w *workers) Workers() ([]model.Worker, error) {
 	var result []model.Worker
 	var err error
 
@@ -40,17 +40,13 @@ func (w *workers) Workers() []model.Worker {
 
 		return nil
 	})
-	if err != nil {
-		log.Debugln("error reading workers:", err)
-	}
-	return result
+	return result, err
 }
 
-func (w *workers) PutWorker(worker *model.Worker) {
-	var err error
+func (w *workers) PutWorker(worker *model.Worker) error {
 	// TODO: Validate name, and also the rest of the object
 
-	err = w.db.Update(func(tx *bolt.Tx) error {
+	return w.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(workerBucketName))
 		if err != nil {
 			return fmt.Errorf("couldn't create bucket %s: %v",
@@ -73,8 +69,4 @@ func (w *workers) PutWorker(worker *model.Worker) {
 		}
 		return nil
 	})
-	if err != nil {
-		log.Debugln("error putting worker:", err)
-		// TODO: Return error, so that we can return a 500
-	}
 }

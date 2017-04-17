@@ -7,7 +7,7 @@ type Worker struct {
 	// Name identifies this worker uniquely
 	Name string
 
-	// DropUrls identifies the drop instances this worker should
+	// DropUrl identifies the drop instances this worker should
 	// connect to
-	DropUrls []*url.URL
+	DropUrl *url.URL
 }
