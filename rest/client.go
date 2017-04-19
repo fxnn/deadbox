@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fxnn/deadbox/model"
@@ -35,7 +36,7 @@ func (c *client) Workers() ([]model.Worker, error) {
 	address := c.resolveAddress("worker")
 	resp, err := http.Get(address)
 	if err != nil {
-		return nil, fmt.Errorf("got response during GET request to \"%s\": %s", address, err)
+		return nil, fmt.Errorf("got error during GET request to \"%s\": %s", address, err)
 	}
 
 	var workers []model.Worker
@@ -47,8 +48,26 @@ func (c *client) Workers() ([]model.Worker, error) {
 	return workers, nil
 }
 
-func (*client) PutWorker(*model.Worker) error {
-	panic("implement me")
+func (c *client) PutWorker(w *model.Worker) error {
+	var err error
+	var v []byte
+
+	v, err = json.Marshal(w)
+	if err != nil {
+		return fmt.Errorf("couldn't encode worker: %s", err)
+	}
+
+	address := c.resolveAddress("worker")
+	resp, err := http.Post(address, "application/json", bytes.NewReader(v))
+	if err != nil {
+		return fmt.Errorf("got error during POST request to \"%s\": %s", address, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("got status %d during POST request to \"%s\"", resp.StatusCode, address)
+	}
+
+	return nil
 }
 
 func (*client) WorkerRequests(model.WorkerId) []model.WorkerRequest {
