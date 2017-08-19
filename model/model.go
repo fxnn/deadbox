@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 // Drop defines the interface for a drop, able to manage workers and store their
 // requests and responses.

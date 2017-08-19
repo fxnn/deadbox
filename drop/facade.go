@@ -10,6 +10,11 @@ import (
 	"log"
 )
 
+type DaemonizedDrop interface {
+	model.Drop
+	daemon.Daemon
+}
+
 // facade contains the implementation of model.Drop.
 // As a facade, it redirects the method calls to the actual implementing
 // structs.
@@ -20,7 +25,7 @@ type facade struct {
 	workers       *workers
 }
 
-func New(c config.Drop, db *bolt.DB) daemon.Daemon {
+func New(c config.Drop, db *bolt.DB) DaemonizedDrop {
 	f := &facade{
 		name:          c.Name,
 		listenAddress: c.ListenAddress,

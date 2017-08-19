@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fxnn/deadbox/model"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -64,7 +65,11 @@ func (c *client) PutWorker(w *model.Worker) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got status %d during POST request to \"%s\"", resp.StatusCode, address)
+		var bodyStr string = "<empty>"
+		if bodyBytes, err := ioutil.ReadAll(resp.Body); err == nil {
+			bodyStr = string(bodyBytes)
+		}
+		return fmt.Errorf("got status %d during POST request to \"%s\": %s", resp.StatusCode, address, bodyStr)
 	}
 
 	return nil
