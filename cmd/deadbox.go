@@ -6,8 +6,6 @@ import (
 	"github.com/fxnn/deadbox/config"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
-	"github.com/fxnn/deadbox/model"
-	"github.com/fxnn/deadbox/rest"
 	"github.com/fxnn/deadbox/worker"
 	"log"
 	"os"
@@ -42,7 +40,7 @@ func startDaemons(cfg *config.Application) []daemon.Daemon {
 	var daemons []daemon.Daemon = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
 
 	for _, dp := range cfg.Drops {
-		go serveDrop(dp, cfg)
+		daemons = append(daemons, serveDrop(dp, cfg))
 	}
 
 	for _, wk := range cfg.Workers {
@@ -67,13 +65,14 @@ func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
 	return d
 }
 
-func serveDrop(dcfg config.Drop, acfg *config.Application) {
+func serveDrop(dcfg config.Drop, acfg *config.Application) daemon.Daemon {
 	var b *bolt.DB = openDb(acfg, dcfg.Name)
 	defer closeDb(b)
 
-	var dp model.Drop = drop.New(dcfg, b)
-	log.Println("Drop", dcfg.Name, "listening on", dcfg.ListenAddress)
-	log.Fatalln(rest.NewServer(dcfg.ListenAddress, dp).Serve())
+	var d daemon.Daemon = drop.New(dcfg, b)
+	d.Start()
+
+	return d
 }
 
 func closeDb(b *bolt.DB) {
