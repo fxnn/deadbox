@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/rest"
 	"net/url"
@@ -14,18 +15,20 @@ const updateRegistrationInterval = 10 * time.Second
 const registrationTimeoutDuration = 10 * updateRegistrationInterval
 
 type facade struct {
+	daemon.Daemon
 	id      model.WorkerId
 	db      *bolt.DB
 	drop    model.Drop
 	dropUrl *url.URL
 }
 
-func New(c config.Worker, db *bolt.DB) func() error {
-	w := &facade{model.WorkerId(c.Name), db, rest.NewClient(c.DropUrl), c.DropUrl}
-	return w.Run
+func New(c config.Worker, db *bolt.DB) daemon.Daemon {
+	f := &facade{nil, model.WorkerId(c.Name), db, rest.NewClient(c.DropUrl), c.DropUrl}
+	f.Daemon = daemon.New(f.main)
+	return f
 }
 
-func (f *facade) Run() error {
+func (f *facade) main(stop <-chan struct{}) error {
 	if err := f.updateRegistration(); err != nil {
 		err = fmt.Errorf("could not register worker %s at drop %s: %s", f.id, f.dropUrl, err)
 		return err
@@ -38,9 +41,11 @@ func (f *facade) Run() error {
 		select {
 		case <-updateRegistrationTicker.C:
 			if err := f.updateRegistration(); err != nil {
-				err = fmt.Errorf("could not update registration of worker %s at drop %s: %s", f.id, f.dropUrl, err)
-				return err
+				return fmt.Errorf("could not update registration of worker %s at drop %s: %s",
+					f.id, f.dropUrl, err)
 			}
+		case <-stop:
+			return nil
 		}
 	}
 }

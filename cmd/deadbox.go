@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/rest"
@@ -20,29 +21,50 @@ const dbFileExtension = "boltdb"
 
 func main() {
 	var cfg *config.Application = config.Dummy()
+	daemons := startDaemons(cfg)
+
+	waitForShutdownRequest()
+
+	log.Println("Shutting down gracefully")
+	shutdownDaemons(daemons)
+}
+
+func shutdownDaemons(daemons []daemon.Daemon) {
+	// TODO: Graceful HTTP shutdown with Go1.8
+	for _, d := range daemons {
+		if err := d.Stop(); err != nil {
+			log.Println(err)
+		}
+	}
+}
+
+func startDaemons(cfg *config.Application) []daemon.Daemon {
+	var daemons []daemon.Daemon = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
 
 	for _, dp := range cfg.Drops {
 		go serveDrop(dp, cfg)
 	}
 
 	for _, wk := range cfg.Workers {
-		go runWorker(wk, cfg)
+		daemons = append(daemons, runWorker(wk, cfg))
 	}
 
+	return daemons
+}
+func waitForShutdownRequest() {
 	ch := make(chan os.Signal)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	log.Println(<-ch)
-
-	log.Println("Shutting down gracefully")
-	// TODO: Graceful HTTP shutdown with Go1.8
 }
 
-func runWorker(wcfg config.Worker, acfg *config.Application) {
+func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
 	var b *bolt.DB = openDb(acfg, wcfg.Name)
 	defer closeDb(b)
 
-	var runWorker func() error = worker.New(wcfg, b)
-	log.Fatalln(runWorker())
+	var d daemon.Daemon = worker.New(wcfg, b)
+	d.Start()
+
+	return d
 }
 
 func serveDrop(dcfg config.Drop, acfg *config.Application) {
