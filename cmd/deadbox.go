@@ -57,9 +57,8 @@ func waitForShutdownRequest() {
 
 func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
 	var b *bolt.DB = openDb(acfg, wcfg.Name)
-	defer closeDb(b)
-
 	var d daemon.Daemon = worker.New(wcfg, b)
+	d.OnStop(b.Close)
 	d.Start()
 
 	return d
@@ -67,18 +66,11 @@ func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
 
 func serveDrop(dcfg config.Drop, acfg *config.Application) daemon.Daemon {
 	var b *bolt.DB = openDb(acfg, dcfg.Name)
-	defer closeDb(b)
-
 	var d daemon.Daemon = drop.New(dcfg, b)
+	d.OnStop(b.Close)
 	d.Start()
 
 	return d
-}
-
-func closeDb(b *bolt.DB) {
-	if err := b.Close(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func openDb(cfg *config.Application, name string) *bolt.DB {

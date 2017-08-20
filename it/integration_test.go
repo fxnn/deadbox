@@ -5,61 +5,89 @@ import (
 	"github.com/fxnn/deadbox/config"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
+	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/worker"
 	"net/url"
 	"os"
 	"testing"
+	"time"
 )
 
 const workerDbFileName = "worker.boltdb"
 const workerName = "itWorker"
 const dropDbFileName = "drop.boltdb"
 const dropName = "itDrop"
-const itPort = "54123"
+const port = "54123"
 
 func TestRegistration(t *testing.T) {
 
-	var (
-		dropCfg    config.Drop
-		dropDb     *bolt.DB
-		dropDaemon daemon.Daemon
-		err        error
-	)
+	drop := runDropDaemon(t)
+	defer drop.Stop()
 
-	defer os.Remove(dropDbFileName)
+	worker := runWorkerDaemon(t)
+	defer worker.Stop()
 
-	dropDb, err = bolt.Open(dropDbFileName, 0664, bolt.DefaultOptions)
+	// HINT: Give the worker some time to register
+	time.Sleep(200 * time.Millisecond)
+
+	actualWorkers, err := drop.Workers()
+	if err != nil {
+		t.Fatalf("could not read drop's worker list: %s", err)
+	}
+
+	assertNumberOfWorkers(actualWorkers, 1, t)
+	actualWorker := actualWorkers[0]
+	assertWorkerName(actualWorker, workerName, t)
+	assertWorkerTimeoutInFuture(actualWorker, t)
+
+}
+
+func assertWorkerTimeoutInFuture(actualWorker model.Worker, t *testing.T) {
+	if actualWorker.Timeout.Before(time.Now()) {
+		t.Fatalf("expected worker timeout to be in the future, but was %s", actualWorker.Timeout)
+	}
+}
+func assertWorkerName(actualWorker model.Worker, workerName string, t *testing.T) {
+	if string(actualWorker.Id) != workerName {
+		t.Fatalf("expected worker to be %s, but was %v", workerName, actualWorker)
+	}
+}
+func assertNumberOfWorkers(actualWorkers []model.Worker, expectedNumber int, t *testing.T) {
+	if len(actualWorkers) != expectedNumber {
+		t.Fatalf("expected %d workers, but got %v", expectedNumber, actualWorkers)
+	}
+}
+
+func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
+
+	cfg := config.Drop{Name: dropName, ListenAddress: ":" + port}
+	db, err := bolt.Open(dropDbFileName, 0664, bolt.DefaultOptions)
 	if err != nil {
 		t.Fatalf("could not open Drop's BoltDB: %s", err)
 	}
-	defer dropDb.Close()
 
-	dropCfg = config.Drop{Name: dropName, ListenAddress: ":" + itPort}
-	dropDaemon = drop.New(dropCfg, dropDb)
-	defer dropDaemon.Stop()
-
+	dropDaemon := drop.New(cfg, db)
+	dropDaemon.OnStop(db.Close)
+	dropDaemon.OnStop(func() error { os.Remove(dropDbFileName); return nil })
 	dropDaemon.Start()
 
-	var (
-		workerCfg    config.Worker
-		workerDb     *bolt.DB
-		workerDaemon daemon.Daemon
-	)
+	return dropDaemon
+}
 
-	defer os.Remove(workerDbFileName)
+func runWorkerDaemon(t *testing.T) daemon.Daemon {
 
-	workerDb, err = bolt.Open(workerDbFileName, 0664, bolt.DefaultOptions)
+	cfg := config.Worker{Name: workerName, DropUrl: parseUrlOrPanic("http://localhost:" + port)}
+	db, err := bolt.Open(workerDbFileName, 0664, bolt.DefaultOptions)
 	if err != nil {
 		t.Fatalf("could not open Worker's BoltDB: %s", err)
 	}
-	defer workerDb.Close()
 
-	workerCfg = config.Worker{Name: workerName, DropUrl: parseUrlOrPanic("http://localhost:" + itPort)}
-	workerDaemon = worker.New(workerCfg, workerDb)
-	defer workerDaemon.Stop()
-
+	workerDaemon := worker.New(cfg, db)
+	workerDaemon.OnStop(db.Close)
+	workerDaemon.OnStop(func() error { os.Remove(workerDbFileName); return nil })
 	workerDaemon.Start()
 
+	return workerDaemon
 }
 
 func parseUrlOrPanic(s string) *url.URL {
