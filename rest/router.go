@@ -33,12 +33,21 @@ func newRouter(drop model.Drop) *router {
 	return result
 }
 
-func (r *router) workerId(rq *http.Request) model.WorkerId {
-	return model.WorkerId(mux.Vars(rq)["workerId"])
+func (r *router) workerId(rq *http.Request) (model.WorkerId, error) {
+	workerId := mux.Vars(rq)["workerId"]
+	if workerId == "" {
+		return "", fmt.Errorf("workerId must be set")
+	}
+	return model.WorkerId(workerId), nil
 }
-func (r *router) outputJson(rw http.ResponseWriter) {
+func (r *router) outputJson(rw http.ResponseWriter, v interface{}) error {
 	rw.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(rw).Encode(v)
 }
+func (r *router) inputJson(rq *http.Request, v interface{}) error {
+	return json.NewDecoder(rq.Body).Decode(v)
+}
+
 func (r *router) requestInvalid(rw http.ResponseWriter, err error) {
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(http.StatusBadRequest)
@@ -54,14 +63,13 @@ func (r *router) handleGetAllWorkers(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	r.outputJson(rw)
 	result, err := r.drop.Workers()
 	if err != nil {
 		r.internalServerError(rw, fmt.Errorf("couldn't get workers: %s", err))
 		return
 	}
 
-	err = json.NewEncoder(rw).Encode(result)
+	err = r.outputJson(rw, result)
 	if err != nil {
 		r.internalServerError(rw, fmt.Errorf("couldn't serialize workers: %s", err))
 		return
@@ -72,9 +80,9 @@ func (r *router) handlePutWorker(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	var worker *model.Worker = &model.Worker{}
-	if err := json.NewDecoder(rq.Body).Decode(worker); err != nil {
-		r.requestInvalid(rw, err)
+	worker := &model.Worker{}
+	if err := r.inputJson(rq, worker); err != nil {
+		r.requestInvalid(rw, fmt.Errorf("couldn't read worker: %s", err))
 		return
 	}
 	if err := r.drop.PutWorker(worker); err != nil {
@@ -87,17 +95,43 @@ func (r *router) handleGetAllWorkerRequests(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	r.outputJson(rw)
-	var workerId model.WorkerId = r.workerId(rq)
-	result := r.drop.WorkerRequests(workerId)
-	json.NewEncoder(rw).Encode(result)
+	workerId, err := r.workerId(rq)
+	if err != nil {
+		r.requestInvalid(rw, err)
+	}
+
+	result, err := r.drop.WorkerRequests(workerId)
+	if err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't get worker requests: %s", err))
+		return
+	}
+
+	if err := r.outputJson(rw, result); err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't encode worker request: %s", err))
+	}
 }
 
 func (r *router) handlePutWorkerRequest(
 	rw http.ResponseWriter,
 	rq *http.Request,
 ) {
-	var request *model.WorkerRequest
-	json.NewDecoder(rq.Body).Decode(request)
-	r.drop.PutWorkerRequest(request)
+	var (
+		workerId model.WorkerId
+		request  *model.WorkerRequest
+		err      error
+	)
+
+	if workerId, err = r.workerId(rq); err != nil {
+		r.requestInvalid(rw, fmt.Errorf("no workerId given"))
+		return
+	}
+
+	if err = r.inputJson(rq, request); err != nil {
+		r.requestInvalid(rw, fmt.Errorf("couldn't read request: %s", err))
+		return
+	}
+
+	if err := r.drop.PutWorkerRequest(workerId, request); err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't put worker request: %s", err))
+	}
 }

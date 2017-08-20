@@ -6,12 +6,13 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
+	t.Logf("TestRegistration")
 
 	drop := runDropDaemon(t)
-	defer drop.Stop()
+	defer stopDaemon(drop, t)
 
 	worker := runWorkerDaemon(t)
-	defer worker.Stop()
+	defer stopDaemon(worker, t)
 
 	// HINT: Give the worker some time to register
 	time.Sleep(200 * time.Millisecond)

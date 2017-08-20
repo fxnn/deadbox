@@ -7,14 +7,21 @@ import (
 // Drop defines the interface for a drop, able to manage workers and store their
 // requests and responses.
 type Drop interface {
+	// Workers is invoked by a user, so that he knows which workers he can interact with.
 	Workers() ([]Worker, error)
+	// PutWorker is invoked by a worker to register himself at the drop.
 	PutWorker(*Worker) error
 
-	WorkerRequests(WorkerId) []WorkerRequest
-	PutWorkerRequest(*WorkerRequest)
+	// WorkerRequests is invoked by a worker to retrieve the list of all open requests he shall process.
+	WorkerRequests(WorkerId) ([]WorkerRequest, error)
+	// PutWorkerRequest is invoked by a user to transfer a request to a worker.
+	PutWorkerRequest(WorkerId, *WorkerRequest) error
 
-	WorkerResponse(WorkerRequestId) []WorkerResponse
-	PutWorkerResponse(*WorkerResponse)
+	// WorkerResponse is invoked by a user to receive the worker's response on a request, and to know that the request
+	// has been processed successfully.
+	WorkerResponse(WorkerId, WorkerRequestId) (WorkerResponse, error)
+	// PutWorkerResponse is invoked by a worker to transfer a response to a successfully processed request.
+	PutWorkerResponse(WorkerId, WorkerRequestId, *WorkerResponse) error
 }
 
 type WorkerId string
@@ -29,6 +36,5 @@ type WorkerRequest struct {
 	Timeout time.Time
 }
 type WorkerResponse struct {
-	Id      WorkerRequestId
 	Timeout time.Time
 }

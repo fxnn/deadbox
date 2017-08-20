@@ -34,6 +34,11 @@ func assertNumberOfWorkers(actualWorkers []model.Worker, expectedNumber int, t *
 		t.Fatalf("expected %d workers, but got %v", expectedNumber, actualWorkers)
 	}
 }
+func assertNumberOfRequests(actualRequests []model.WorkerRequest, expectedNumber int, t *testing.T) {
+	if len(actualRequests) != expectedNumber {
+		t.Fatalf("expected %d requests, but got %v", expectedNumber, actualRequests)
+	}
+}
 
 func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
 
@@ -44,8 +49,11 @@ func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
 	}
 
 	dropDaemon := drop.New(cfg, db)
-	dropDaemon.OnStop(db.Close)
-	dropDaemon.OnStop(func() error { os.Remove(dropDbFileName); return nil })
+	dropDaemon.OnStop(func() error {
+		db.Close()
+		os.Remove(dropDbFileName)
+		return nil
+	})
 	dropDaemon.Start()
 
 	return dropDaemon
@@ -60,11 +68,18 @@ func runWorkerDaemon(t *testing.T) daemon.Daemon {
 	}
 
 	workerDaemon := worker.New(cfg, db)
-	workerDaemon.OnStop(db.Close)
-	workerDaemon.OnStop(func() error { os.Remove(workerDbFileName); return nil })
+	workerDaemon.OnStop(func() error {
+		db.Close()
+		os.Remove(workerDbFileName)
+		return nil
+	})
 	workerDaemon.Start()
 
 	return workerDaemon
+}
+
+func stopDaemon(d daemon.Daemon, t *testing.T) {
+	t.Log(d.Stop())
 }
 
 func parseUrlOrPanic(s string) *url.URL {

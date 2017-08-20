@@ -63,18 +63,18 @@ func (f *facade) PutWorker(w *model.Worker) error {
 	return f.workers.PutWorker(w)
 }
 
-func (*facade) WorkerRequests(model.WorkerId) []model.WorkerRequest {
-	panic("implement me")
+func (*facade) WorkerRequests(model.WorkerId) ([]model.WorkerRequest, error) {
+	return nil, fmt.Errorf("implement me")
 }
 
-func (*facade) PutWorkerRequest(*model.WorkerRequest) {
-	panic("implement me")
+func (*facade) PutWorkerRequest(model.WorkerId, *model.WorkerRequest) error {
+	return fmt.Errorf("implement me")
 }
 
-func (*facade) WorkerResponse(model.WorkerRequestId) []model.WorkerResponse {
-	panic("implement me")
+func (*facade) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.WorkerResponse, error) {
+	return model.WorkerResponse{}, fmt.Errorf("implement me")
 }
 
-func (*facade) PutWorkerResponse(*model.WorkerResponse) {
-	panic("implement me")
+func (*facade) PutWorkerResponse(model.WorkerId, model.WorkerRequestId, *model.WorkerResponse) error {
+	return fmt.Errorf("implement me")
 }
