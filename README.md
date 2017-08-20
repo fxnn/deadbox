@@ -1,7 +1,8 @@
 # Deadbox
 Access data and devices in your private network without Dynamic DNS, port opening etc.
 
-**Note:** This is a _concept_, implementation pending!
+Implementation is done as far as there's some spare time.
+
 I'm very happy to hear your feedback and ideas. Simply file an issue!
 
 ## Problem
@@ -96,6 +97,17 @@ Possible use cases are as follows.
 
 ## Specification
 
+### Security
+
+* Drop secures it's REST interface using TLS.
+  If the workers regards the TLS certificate as untrusted,
+  [Public Key Pinning](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning) might be an option.
+* Worker identifies itself using client certificates while connecting with TLS.
+* Drop compares worker's certificate against whitelist as means of authorization.
+* User encrypts requests using the worker's public key.
+  User retrieves that public key from the Drop, which received it during registration.
+* Worker encrypts responses using the user's public key, which is included in the request.
+
 ### Command Line Interface
 
 The main program is `deadbox`, providing at least the following arguments.
@@ -113,7 +125,7 @@ The file `worker.yml` contains the configuration for an worker.
 It must configure at least the following aspects.
 
 * A textual identifier of the worker instance.
-Should be unique amongst all workers on the same drop.
+  Should be unique amongst all workers on the same drop.
 * URL of one (or even multiple) drops.
 * A reference to a private (and possibly public) key file, used to decrypt 
   received messages and to identify the worker's instance against a drop.
