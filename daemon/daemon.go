@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// Daemon interface describes a process running in the background, that might be started and stopped.
 type Daemon interface {
 	Running() bool
 	Start() error
@@ -66,11 +67,9 @@ func (d *daemon) waitUntilStopped() {
 		<-d.stopped
 	}
 }
-
 func (d *daemon) sendStoppedEvent() {
 	d.closeStoppedChannel() // HINT: Closing makes receivers recieve a zero value
 }
-
 func (d *daemon) closeStoppedChannel() {
 	if d.stopped != nil {
 		close(d.stopped)
@@ -81,7 +80,6 @@ func (d *daemon) closeStoppedChannel() {
 func (d *daemon) sendStopEvent() {
 	d.closeStopChannel() // HINT: Closing makes receivers recieve a zero value
 }
-
 func (d *daemon) closeStopChannel() {
 	if d.stop != nil {
 		close(d.stop)
@@ -92,7 +90,6 @@ func (d *daemon) closeStopChannel() {
 func (d *daemon) OnStop(handler func() error) {
 	d.onStop = append(d.onStop, handler)
 }
-
 func (d *daemon) invokeOnStopHandlers() {
 	for _, l := range d.onStop {
 		if err := l(); err != nil {
