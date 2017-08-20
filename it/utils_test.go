@@ -39,6 +39,11 @@ func assertNumberOfRequests(actualRequests []model.WorkerRequest, expectedNumber
 		t.Fatalf("expected %d requests, but got %v", expectedNumber, actualRequests)
 	}
 }
+func assertRequestId(actualRequest model.WorkerRequest, expectedId string, t *testing.T) {
+	if string(actualRequest.Id) != expectedId {
+		t.Fatalf("expected request to have id %s, but got %s", expectedId, actualRequest.Id)
+	}
+}
 
 func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
 
@@ -50,8 +55,12 @@ func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
 
 	dropDaemon := drop.New(cfg, db)
 	dropDaemon.OnStop(func() error {
-		db.Close()
-		os.Remove(dropDbFileName)
+		if err := db.Close(); err != nil {
+			return err
+		}
+		if err := os.Remove(dropDbFileName); err != nil {
+			return err
+		}
 		return nil
 	})
 	dropDaemon.Start()
@@ -69,8 +78,12 @@ func runWorkerDaemon(t *testing.T) daemon.Daemon {
 
 	workerDaemon := worker.New(cfg, db)
 	workerDaemon.OnStop(func() error {
-		db.Close()
-		os.Remove(workerDbFileName)
+		if err := db.Close(); err != nil {
+			return err
+		}
+		if err := os.Remove(workerDbFileName); err != nil {
+			return err
+		}
 		return nil
 	})
 	workerDaemon.Start()
@@ -79,7 +92,10 @@ func runWorkerDaemon(t *testing.T) daemon.Daemon {
 }
 
 func stopDaemon(d daemon.Daemon, t *testing.T) {
-	t.Log(d.Stop())
+	err := d.Stop()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func parseUrlOrPanic(s string) *url.URL {

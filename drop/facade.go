@@ -23,6 +23,7 @@ type facade struct {
 	name          string
 	listenAddress string
 	workers       *workers
+	requests      *requests
 }
 
 func New(c config.Drop, db *bolt.DB) DaemonizedDrop {
@@ -30,6 +31,7 @@ func New(c config.Drop, db *bolt.DB) DaemonizedDrop {
 		name:          c.Name,
 		listenAddress: c.ListenAddress,
 		workers:       newWorkers(db),
+		requests:      newRequests(db),
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
@@ -63,12 +65,12 @@ func (f *facade) PutWorker(w *model.Worker) error {
 	return f.workers.PutWorker(w)
 }
 
-func (*facade) WorkerRequests(model.WorkerId) ([]model.WorkerRequest, error) {
-	return nil, fmt.Errorf("implement me")
+func (f *facade) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, error) {
+	return f.requests.WorkerRequests(id)
 }
 
-func (*facade) PutWorkerRequest(model.WorkerId, *model.WorkerRequest) error {
-	return fmt.Errorf("implement me")
+func (f *facade) PutWorkerRequest(id model.WorkerId, request *model.WorkerRequest) error {
+	return f.requests.PutWorkerRequest(id, request)
 }
 
 func (*facade) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.WorkerResponse, error) {
