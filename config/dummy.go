@@ -7,10 +7,13 @@ func Dummy() *Application {
 	w := Worker{
 		Name:    "Default Worker",
 		DropUrl: dropUrl,
+		UpdateRegistrationIntervalInSeconds: DefaultUpdateRegistrationIntervalInSeconds,
+		RegistrationTimeoutInSeconds:        DefaultRegistrationTimeoutInSeconds,
 	}
 	d := Drop{
-		Name:          "Default Drop",
-		ListenAddress: ":" + DefaultPort,
+		Name:                      "Default Drop",
+		ListenAddress:             ":" + DefaultPort,
+		MaxWorkerTimeoutInSeconds: DefaultMaxWorkerTimeoutInSeconds,
 	}
 	app := &Application{
 		DbPath:  "./",

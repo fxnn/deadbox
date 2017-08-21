@@ -12,11 +12,8 @@ import (
 const requestBucketName = "request"
 
 type requests struct {
-	db *bolt.DB
-}
-
-func newRequests(db *bolt.DB) *requests {
-	return &requests{db}
+	db                *bolt.DB
+	maxRequestTimeout time.Duration
 }
 
 func (w *requests) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, error) {
@@ -33,6 +30,7 @@ func (w *requests) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, err
 		wb := b.Bucket([]byte(id))
 		if wb == nil {
 			log.Debugf("no request bucket for worker %s in db", id)
+			return nil
 		}
 
 		c := wb.Cursor()
@@ -50,12 +48,14 @@ func (w *requests) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, err
 }
 
 func (w *requests) PutWorkerRequest(id model.WorkerId, request *model.WorkerRequest) error {
-	// TODO: Validate name, and also the rest of the object
 	if request.Id == "" {
 		return fmt.Errorf("request ID must not be empty")
 	}
 	if request.Timeout.Before(time.Now()) {
 		return fmt.Errorf("request timeout must be in the future")
+	}
+	if request.Timeout.Sub(time.Now()) > w.maxRequestTimeout {
+		return fmt.Errorf("request timeout cannot be more than %s in the future", w.maxRequestTimeout.String())
 	}
 
 	return w.db.Update(func(tx *bolt.Tx) error {

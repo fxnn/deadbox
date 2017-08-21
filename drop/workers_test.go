@@ -12,23 +12,20 @@ const testDbFilename = "./test.boltdb"
 
 func TestPutAndGet(t *testing.T) {
 
-	var db *bolt.DB
-	var sut *workers
-
-	db = openTestDb()
+	db := openTestDb()
 	defer closeTestDb(db)
 
-	sut = newWorkers(db)
+	sut := &workers{db, 10}
+	sut.PutWorker(&model.Worker{"id", time.Now().Add(time.Minute)})
 
-	var given model.Worker = model.Worker{"id", time.Now()}
-	sut.PutWorker(&given)
-
-	var results []model.Worker = sut.Workers()
-	if len(results) != 1 {
-		t.Fatalf("expected response with 1 arg, but got %v",
-			results)
+	results, err := sut.Workers()
+	if err != nil {
+		t.Fatalf("sut.Workers() returned error: %s", err)
 	}
-	var result model.Worker = results[0]
+	if len(results) != 1 {
+		t.Fatalf("expected response with 1 arg, but got %v", results)
+	}
+	result := results[0]
 	if result.Id != "id" {
 		t.Fatalf("got id %v", string(result.Id))
 	}

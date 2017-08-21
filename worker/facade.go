@@ -11,19 +11,25 @@ import (
 	"time"
 )
 
-const updateRegistrationInterval = 10 * time.Second
-const registrationTimeoutDuration = 10 * updateRegistrationInterval
-
 type facade struct {
 	daemon.Daemon
-	id      model.WorkerId
-	db      *bolt.DB
-	drop    model.Drop
-	dropUrl *url.URL
+	id                          model.WorkerId
+	db                          *bolt.DB
+	drop                        model.Drop
+	dropUrl                     *url.URL
+	updateRegistrationInterval  time.Duration
+	registrationTimeoutDuration time.Duration
 }
 
 func New(c config.Worker, db *bolt.DB) daemon.Daemon {
-	f := &facade{nil, model.WorkerId(c.Name), db, rest.NewClient(c.DropUrl), c.DropUrl}
+	f := &facade{
+		id:                          model.WorkerId(c.Name),
+		db:                          db,
+		drop:                        rest.NewClient(c.DropUrl),
+		dropUrl:                     c.DropUrl,
+		registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
+		updateRegistrationInterval:  time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
+	}
 	f.Daemon = daemon.New(f.main)
 	return f
 }
@@ -34,7 +40,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 		return err
 	}
 
-	updateRegistrationTicker := time.NewTicker(updateRegistrationInterval)
+	updateRegistrationTicker := time.NewTicker(f.updateRegistrationInterval)
 	defer updateRegistrationTicker.Stop()
 
 	for {
@@ -55,6 +61,6 @@ func (f *facade) quotedId() string {
 }
 
 func (f *facade) updateRegistration() error {
-	w := &model.Worker{Id: f.id, Timeout: time.Now().Add(registrationTimeoutDuration)}
+	w := &model.Worker{Id: f.id, Timeout: time.Now().Add(f.registrationTimeoutDuration)}
 	return f.drop.PutWorker(w)
 }

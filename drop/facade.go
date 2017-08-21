@@ -8,6 +8,7 @@ import (
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/rest"
 	"log"
+	"time"
 )
 
 type DaemonizedDrop interface {
@@ -30,8 +31,8 @@ func New(c config.Drop, db *bolt.DB) DaemonizedDrop {
 	f := &facade{
 		name:          c.Name,
 		listenAddress: c.ListenAddress,
-		workers:       newWorkers(db),
-		requests:      newRequests(db),
+		workers:       &workers{db, time.Duration(c.MaxWorkerTimeoutInSeconds) * time.Second},
+		requests:      &requests{db, time.Duration(c.MaxRequestTimeoutInSeconds) * time.Second},
 	}
 	f.Daemon = daemon.New(f.main)
 	return f

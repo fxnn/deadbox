@@ -6,16 +6,14 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/gone/log"
+	"time"
 )
 
 const workerBucketName = "worker"
 
 type workers struct {
-	db *bolt.DB
-}
-
-func newWorkers(db *bolt.DB) *workers {
-	return &workers{db}
+	db               *bolt.DB
+	maxWorkerTimeout time.Duration
 }
 
 func (w *workers) Workers() ([]model.Worker, error) {
@@ -44,7 +42,15 @@ func (w *workers) Workers() ([]model.Worker, error) {
 }
 
 func (w *workers) PutWorker(worker *model.Worker) error {
-	// TODO: Validate name, and also the rest of the object
+	if worker.Id == "" {
+		return fmt.Errorf("worker ID must not be empty")
+	}
+	if worker.Timeout.Before(time.Now()) {
+		return fmt.Errorf("worker timeout must be in the future")
+	}
+	if worker.Timeout.Sub(time.Now()) > w.maxWorkerTimeout {
+		return fmt.Errorf("worker timeout cannot be more than %s in the future", w.maxWorkerTimeout.String())
+	}
 
 	return w.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(workerBucketName))
