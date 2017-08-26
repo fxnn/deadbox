@@ -11,9 +11,10 @@ matrix:
 
 before_install:
   - go get -t -v ./...
+  - go get github.com/pierrre/gotestcover
 
 script:
-  - go test -race -coverprofile=coverage.txt -covermode=atomic
+  - gotestcover -v -covermode=count -coverprofile=coverage.txt ./...
 
 after_success:
   # submit to codecov.io
