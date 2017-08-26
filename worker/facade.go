@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"time"
 
+	"log"
+
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
 	"github.com/fxnn/deadbox/daemon"
@@ -12,7 +14,6 @@ import (
 	"github.com/fxnn/deadbox/rest"
 )
 
-// @todo #3 Replace pull with push mechanism (e.g. websocket)
 const pollRequestInterval = 1 * time.Second
 
 type Daemonized interface {
@@ -25,6 +26,7 @@ type Daemonized interface {
 type facade struct {
 	daemon.Daemon
 	registrator
+	processor
 	name                        string
 	db                          *bolt.DB
 	drop                        model.Drop
@@ -45,6 +47,7 @@ func New(c config.Worker, db *bolt.DB) Daemonized {
 			name: c.Name,
 			registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
 		},
+		processor: processor{},
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
@@ -59,9 +62,17 @@ func (f *facade) main(stop <-chan struct{}) error {
 	updateRegistrationTicker := time.NewTicker(f.updateRegistrationInterval)
 	defer updateRegistrationTicker.Stop()
 
+	pollRequestTicker := time.NewTicker(pollRequestInterval)
+	defer pollRequestTicker.Stop()
+
 	for {
 		select {
-		// @todo #7 worker processes requests from drop
+		case <-pollRequestTicker.C:
+			// @todo #3 Replace pull with push mechanism (e.g. websocket)
+			if err := f.pollRequests(); err != nil {
+				log.Printf("worker %s at drop %s could not poll requests: %s", f.QuotedNameAndId(),
+					f.dropUrl, err)
+			}
 		case <-updateRegistrationTicker.C:
 			if err := f.updateRegistration(); err != nil {
 				return fmt.Errorf("worker %s at drop %s could not update its registration: %s",
