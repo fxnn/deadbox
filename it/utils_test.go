@@ -1,16 +1,18 @@
 package it
 
 import (
+	"net/url"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
 	"github.com/fxnn/deadbox/model"
+	"github.com/fxnn/deadbox/rest"
 	"github.com/fxnn/deadbox/worker"
-	"net/url"
-	"os"
-	"testing"
-	"time"
 )
 
 const workerDbFileName = "worker.boltdb"
@@ -45,9 +47,14 @@ func assertRequestId(actualRequest model.WorkerRequest, expectedId string, t *te
 	}
 }
 
-func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
+func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 
-	cfg := config.Drop{Name: dropName, ListenAddress: ":" + port}
+	cfg := config.Drop{
+		Name:                       dropName,
+		ListenAddress:              ":" + port,
+		MaxRequestTimeoutInSeconds: config.DefaultMaxRequestTimeoutInSeconds,
+		MaxWorkerTimeoutInSeconds:  config.DefaultMaxWorkerTimeoutInSeconds,
+	}
 	db, err := bolt.Open(dropDbFileName, 0664, bolt.DefaultOptions)
 	if err != nil {
 		t.Fatalf("could not open Drop's BoltDB: %s", err)
@@ -65,12 +72,19 @@ func runDropDaemon(t *testing.T) drop.DaemonizedDrop {
 	})
 	dropDaemon.Start()
 
-	return dropDaemon
+	dropClient := rest.NewClient(parseUrlOrPanic("http://localhost:" + port))
+
+	return dropDaemon, dropClient
 }
 
 func runWorkerDaemon(t *testing.T) daemon.Daemon {
 
-	cfg := config.Worker{Name: workerName, DropUrl: parseUrlOrPanic("http://localhost:" + port)}
+	cfg := config.Worker{
+		Name:    workerName,
+		DropUrl: parseUrlOrPanic("http://localhost:" + port),
+		RegistrationTimeoutInSeconds:        config.DefaultRegistrationTimeoutInSeconds,
+		UpdateRegistrationIntervalInSeconds: config.DefaultUpdateRegistrationIntervalInSeconds,
+	}
 	db, err := bolt.Open(workerDbFileName, 0664, bolt.DefaultOptions)
 	if err != nil {
 		t.Fatalf("could not open Worker's BoltDB: %s", err)

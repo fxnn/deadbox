@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/fxnn/deadbox/model"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/fxnn/deadbox/model"
 )
 
 // client implements a REST client to a drop server.
@@ -20,7 +21,7 @@ func NewClient(url *url.URL) model.Drop {
 }
 
 func (c *client) Workers() (workers []model.Worker, err error) {
-	err = c.get("worker", workers)
+	err = c.get("worker", &workers)
 	return
 }
 func (c *client) PutWorker(w *model.Worker) error {
@@ -29,7 +30,7 @@ func (c *client) PutWorker(w *model.Worker) error {
 
 func (c *client) WorkerRequests(workerId model.WorkerId) (requests []model.WorkerRequest, err error) {
 	path := fmt.Sprintf("worker/%s/request", workerId)
-	err = c.get(path, requests)
+	err = c.get(path, &requests)
 	return
 }
 
@@ -40,7 +41,7 @@ func (c *client) PutWorkerRequest(workerId model.WorkerId, request *model.Worker
 
 func (c *client) WorkerResponse(workerId model.WorkerId, requestId model.WorkerRequestId) (response model.WorkerResponse, err error) {
 	path := fmt.Sprintf("worker/%s/response/%s", workerId, requestId)
-	err = c.get(path, response)
+	err = c.get(path, &response)
 	return
 }
 

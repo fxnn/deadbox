@@ -6,10 +6,9 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
-	t.Logf("TestRegistration")
 
-	drop := runDropDaemon(t)
-	defer stopDaemon(drop, t)
+	daemon, drop := runDropDaemon(t)
+	defer stopDaemon(daemon, t)
 
 	worker := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)

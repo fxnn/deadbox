@@ -3,19 +3,20 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/fxnn/deadbox/model"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type router struct {
-	http.Handler
-	drop model.Drop
+	handler http.Handler
+	drop    model.Drop
 }
 
 func newRouter(drop model.Drop) *router {
 	handler := mux.NewRouter()
-	result := &router{Handler: handler, drop: drop}
+	result := &router{handler: handler, drop: drop}
 
 	handler.Path("/worker").
 		HandlerFunc(result.handleGetAllWorkers).
@@ -31,6 +32,10 @@ func newRouter(drop model.Drop) *router {
 		Methods("POST")
 
 	return result
+}
+
+func (r *router) ServeHTTP(w http.ResponseWriter, r2 *http.Request) {
+	r.handler.ServeHTTP(w, r2)
 }
 
 func (r *router) workerId(rq *http.Request) (model.WorkerId, error) {
@@ -126,6 +131,7 @@ func (r *router) handlePutWorkerRequest(
 		return
 	}
 
+	request = &model.WorkerRequest{}
 	if err = r.inputJson(rq, request); err != nil {
 		r.requestInvalid(rw, fmt.Errorf("couldn't read request: %s", err))
 		return

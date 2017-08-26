@@ -1,18 +1,21 @@
 package it
 
 import (
-	"github.com/fxnn/deadbox/model"
 	"testing"
 	"time"
+
+	"github.com/fxnn/deadbox/model"
 )
 
 const workerRequestId = "workerRequestId"
 
 func TestRequest(t *testing.T) {
-	t.Logf("TestRequest")
 
-	drop := runDropDaemon(t)
-	defer stopDaemon(drop, t)
+	daemon, drop := runDropDaemon(t)
+	defer stopDaemon(daemon, t)
+
+	// HINT: Give drop some time to startup
+	time.Sleep(1000 * time.Millisecond)
 
 	worker := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
@@ -41,10 +44,12 @@ func TestRequest(t *testing.T) {
 }
 
 func TestDuplicateRequestFails(t *testing.T) {
-	t.Logf("TestRequest")
 
-	drop := runDropDaemon(t)
-	defer stopDaemon(drop, t)
+	daemon, drop := runDropDaemon(t)
+	defer stopDaemon(daemon, t)
+
+	// HINT: Give drop some time to startup
+	time.Sleep(200 * time.Millisecond)
 
 	worker := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)

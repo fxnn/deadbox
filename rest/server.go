@@ -2,16 +2,16 @@ package rest
 
 import (
 	"fmt"
-	"github.com/fxnn/deadbox/model"
-	"net"
 	"net/http"
+
+	"github.com/fxnn/deadbox/model"
 )
 
 type Server struct {
-	addr     string
-	listener net.Listener
-	router   *router
-	stopped  chan error
+	addr    string
+	server  *http.Server
+	router  *router
+	stopped chan error
 }
 
 func NewServer(addr string, drop model.Drop) *Server {
@@ -19,10 +19,11 @@ func NewServer(addr string, drop model.Drop) *Server {
 }
 
 func (s *Server) Close() error {
-	if s.listener != nil {
-		var err error = s.listener.Close()
-		s.listener = nil
+	if s.server != nil {
+		var err error = s.server.Shutdown(nil)
+		s.server = nil
 		if err != nil {
+			<-s.stopped
 			return err
 		}
 		return <-s.stopped
@@ -32,21 +33,15 @@ func (s *Server) Close() error {
 }
 
 func (s *Server) StartServing() error {
-	var (
-		err error
-	)
-
-	s.listener, err = net.Listen("tcp", s.addr)
-	if err != nil {
-		return err
-	}
-
+	s.server = &http.Server{Addr: s.addr, Handler: s.router}
 	s.stopped = make(chan error)
+
 	go func() {
 		defer close(s.stopped)
-		if err := http.Serve(s.listener, s.router); err != nil {
-			s.stopped <- fmt.Errorf("REST server on %s terminated: %s", s.addr, err)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			s.stopped <- fmt.Errorf("REST server on %s terminated unexpectedly: %s", s.addr, err)
 		}
 	}()
+
 	return nil
 }

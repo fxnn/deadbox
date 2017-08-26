@@ -1,11 +1,12 @@
 package drop
 
 import (
-	"github.com/boltdb/bolt"
-	"github.com/fxnn/deadbox/model"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/boltdb/bolt"
+	"github.com/fxnn/deadbox/model"
 )
 
 const testDbFilename = "./test.boltdb"
@@ -15,8 +16,11 @@ func TestPutAndGet(t *testing.T) {
 	db := openTestDb()
 	defer closeTestDb(db)
 
-	sut := &workers{db, 10}
-	sut.PutWorker(&model.Worker{"id", time.Now().Add(time.Minute)})
+	sut := &workers{db, 10 * time.Minute}
+	err := sut.PutWorker(&model.Worker{Id: "id", Timeout: time.Now().Add(time.Minute)})
+	if err != nil {
+		t.Fatalf("sut.PutWorker() returned error: %s", err)
+	}
 
 	results, err := sut.Workers()
 	if err != nil {

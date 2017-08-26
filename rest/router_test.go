@@ -1,10 +1,11 @@
 package rest
 
 import (
-	"github.com/fxnn/deadbox/model"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/fxnn/deadbox/model"
 )
 
 func TestGetAllWorkers(t *testing.T) {
@@ -34,26 +35,26 @@ func TestGetAllWorkers(t *testing.T) {
 
 type mockDrop struct{}
 
-func (*mockDrop) Workers() []model.Worker {
-	return make([]model.Worker, 0)
+func (*mockDrop) Workers() ([]model.Worker, error) {
+	return make([]model.Worker, 0), nil
 }
 
-func (*mockDrop) PutWorker(*model.Worker) {
-	// no-op
+func (*mockDrop) PutWorker(*model.Worker) error {
+	return nil
 }
 
-func (*mockDrop) WorkerRequests(model.WorkerId) []model.WorkerRequest {
-	return make([]model.WorkerRequest, 0)
+func (*mockDrop) WorkerRequests(model.WorkerId) ([]model.WorkerRequest, error) {
+	return make([]model.WorkerRequest, 0), nil
 }
 
-func (*mockDrop) PutWorkerRequest(*model.WorkerRequest) {
-	// no-op
+func (*mockDrop) PutWorkerRequest(model.WorkerId, *model.WorkerRequest) error {
+	return nil
 }
 
-func (*mockDrop) WorkerResponse(model.WorkerRequestId) []model.WorkerResponse {
-	return make([]model.WorkerResponse, 0)
+func (*mockDrop) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.WorkerResponse, error) {
+	return model.WorkerResponse{}, nil
 }
 
-func (*mockDrop) PutWorkerResponse(*model.WorkerResponse) {
-	// no-op
+func (*mockDrop) PutWorkerResponse(model.WorkerId, model.WorkerRequestId, *model.WorkerResponse) error {
+	return nil
 }

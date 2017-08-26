@@ -30,8 +30,7 @@ func TestWorker2Json(t *testing.T) {
 		t.Fatalf("expected id %v, but got %v",
 			expectedId, worker.Id)
 	}
-	if worker.Timeout != expectedTimeout {
-		t.Fatalf("expected timeout %v, but got %v",
-			expectedTimeout, worker.Timeout)
+	if worker.Timeout.Sub(expectedTimeout) > 1*time.Millisecond || expectedTimeout.Sub(worker.Timeout) > 1*time.Millisecond {
+		t.Fatalf("expected timeout %v, but got %v", expectedTimeout, worker.Timeout)
 	}
 }
