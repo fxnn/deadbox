@@ -17,7 +17,7 @@ func TestPutAndGet(t *testing.T) {
 	defer closeTestDb(db)
 
 	sut := &workers{db, 10 * time.Minute}
-	err := sut.PutWorker(&model.Worker{Id: "id", Timeout: time.Now().Add(time.Minute)})
+	err := sut.PutWorker(&model.Worker{Id: "id", Name: "name", Timeout: time.Now().Add(time.Minute)})
 	if err != nil {
 		t.Fatalf("sut.PutWorker() returned error: %s", err)
 	}

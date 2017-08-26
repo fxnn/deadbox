@@ -12,18 +12,25 @@ import (
 	"github.com/fxnn/deadbox/rest"
 )
 
+type Daemonized interface {
+	daemon.Daemon
+	Id() model.WorkerId
+	Name() string
+	QuotedNameAndId() string
+}
+
 type facade struct {
 	daemon.Daemon
+	registrator
 	name                        string
 	db                          *bolt.DB
 	drop                        model.Drop
 	dropUrl                     *url.URL
 	updateRegistrationInterval  time.Duration
 	registrationTimeoutDuration time.Duration
-	registrator
 }
 
-func New(c config.Worker, db *bolt.DB) daemon.Daemon {
+func New(c config.Worker, db *bolt.DB) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
 	f := &facade{
 		db:                         db,
@@ -42,7 +49,7 @@ func New(c config.Worker, db *bolt.DB) daemon.Daemon {
 
 func (f *facade) main(stop <-chan struct{}) error {
 	if err := f.updateRegistration(); err != nil {
-		err = fmt.Errorf("worker %s at drop %s could not be registered: %s", f.quotedNameAndId(), f.dropUrl, err)
+		err = fmt.Errorf("worker %s at drop %s could not be registered: %s", f.QuotedNameAndId(), f.dropUrl, err)
 		return err
 	}
 
@@ -54,7 +61,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 		case <-updateRegistrationTicker.C:
 			if err := f.updateRegistration(); err != nil {
 				return fmt.Errorf("worker %s at drop %s could not update its registration: %s",
-					f.quotedNameAndId(), f.dropUrl, err)
+					f.QuotedNameAndId(), f.dropUrl, err)
 			}
 		case <-stop:
 			return nil

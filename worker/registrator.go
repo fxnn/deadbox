@@ -29,7 +29,15 @@ func (r *registrator) updateRegistration() error {
 	return r.drop.PutWorker(w)
 }
 
-func (r *registrator) quotedNameAndId() string {
+func (r *registrator) Id() model.WorkerId {
+	return r.id
+}
+
+func (r *registrator) Name() string {
+	return r.name
+}
+
+func (r *registrator) QuotedNameAndId() string {
 	return fmt.Sprintf("'%s' (%s)", r.name, r.id)
 }
 

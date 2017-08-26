@@ -14,11 +14,11 @@ func TestRequest(t *testing.T) {
 	daemon, drop := runDropDaemon(t)
 	defer stopDaemon(daemon, t)
 
-	// HINT: Give drop some time to startup
-	time.Sleep(1000 * time.Millisecond)
-
 	worker := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
+
+	// HINT: drop and worker some time to settle
+	time.Sleep(100 * time.Millisecond)
 
 	var (
 		err      error
@@ -29,10 +29,10 @@ func TestRequest(t *testing.T) {
 		}
 	)
 
-	if err := drop.PutWorkerRequest(workerName, &request); err != nil {
+	if err := drop.PutWorkerRequest(worker.Id(), &request); err != nil {
 		t.Fatalf("filing a new request failed: %s", err)
 	}
-	if requests, err = drop.WorkerRequests(workerName); err != nil {
+	if requests, err = drop.WorkerRequests(worker.Id()); err != nil {
 		t.Fatalf("receiving a previously filed request failed: %s", err)
 	}
 
@@ -48,11 +48,11 @@ func TestDuplicateRequestFails(t *testing.T) {
 	daemon, drop := runDropDaemon(t)
 	defer stopDaemon(daemon, t)
 
-	// HINT: Give drop some time to startup
-	time.Sleep(200 * time.Millisecond)
-
 	worker := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
+
+	// HINT: drop and worker some time to settle
+	time.Sleep(100 * time.Millisecond)
 
 	var (
 		request model.WorkerRequest = model.WorkerRequest{
@@ -61,10 +61,10 @@ func TestDuplicateRequestFails(t *testing.T) {
 		}
 	)
 
-	if err := drop.PutWorkerRequest(workerName, &request); err != nil {
+	if err := drop.PutWorkerRequest(worker.Id(), &request); err != nil {
 		t.Fatalf("filing a new request failed: %s", err)
 	}
-	if err := drop.PutWorkerRequest(workerName, &request); err == nil {
+	if err := drop.PutWorkerRequest(worker.Id(), &request); err == nil {
 		t.Fatalf("filing a request twice should've failed")
 	}
 

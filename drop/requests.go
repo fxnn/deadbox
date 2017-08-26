@@ -48,7 +48,7 @@ func (w *requests) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, err
 	return result, err
 }
 
-func (w *requests) PutWorkerRequest(id model.WorkerId, request *model.WorkerRequest) error {
+func (w *requests) PutWorkerRequest(workerId model.WorkerId, request *model.WorkerRequest) error {
 	if request.Id == "" {
 		return fmt.Errorf("request ID must not be empty")
 	}
@@ -60,14 +60,22 @@ func (w *requests) PutWorkerRequest(id model.WorkerId, request *model.WorkerRequ
 	}
 
 	return w.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(workerBucketName))
+		if b == nil {
+			return fmt.Errorf("worker '%s' does not exist: no worker bucket in db", workerId)
+		}
+		if b.Get([]byte(workerId)) == nil {
+			return fmt.Errorf("worker '%s' does not exist", workerId)
+		}
+
 		b, err := tx.CreateBucketIfNotExists([]byte(requestBucketName))
 		if err != nil {
 			return fmt.Errorf("bucket '%s' could not be created: %v", requestBucketName, err)
 		}
 
-		wb, err := b.CreateBucketIfNotExists([]byte(id))
+		wb, err := b.CreateBucketIfNotExists([]byte(workerId))
 		if err != nil {
-			return fmt.Errorf("worker bucket '%s' could not be created: %v", id, err)
+			return fmt.Errorf("worker bucket '%s' could not be created: %v", workerId, err)
 		}
 
 		if wb.Get([]byte(request.Id)) != nil {

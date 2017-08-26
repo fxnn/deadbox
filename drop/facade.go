@@ -12,7 +12,7 @@ import (
 	"github.com/fxnn/deadbox/rest"
 )
 
-type DaemonizedDrop interface {
+type Daemonized interface {
 	model.Drop
 	daemon.Daemon
 }
@@ -28,7 +28,7 @@ type facade struct {
 	requests      *requests
 }
 
-func New(c config.Drop, db *bolt.DB) DaemonizedDrop {
+func New(c config.Drop, db *bolt.DB) Daemonized {
 	f := &facade{
 		name:          c.Name,
 		listenAddress: c.ListenAddress,

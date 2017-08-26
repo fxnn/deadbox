@@ -46,6 +46,9 @@ func (w *workers) PutWorker(worker *model.Worker) error {
 	if worker.Id == "" {
 		return fmt.Errorf("worker ID must not be empty")
 	}
+	if worker.Name == "" {
+		return fmt.Errorf("worker Name must not be empty")
+	}
 	if worker.Timeout.Before(time.Now()) {
 		return fmt.Errorf("worker timeout must be in the future")
 	}
@@ -65,14 +68,12 @@ func (w *workers) PutWorker(worker *model.Worker) error {
 			return fmt.Errorf("couldn't marshal worker: %v", err)
 		}
 		if v == nil {
-			return fmt.Errorf("unexpected nil for key %v",
-				string(worker.Id))
+			return fmt.Errorf("unexpected nil for key %v", string(worker.Id))
 		}
 
 		err = b.Put([]byte(worker.Id), v)
 		if err != nil {
-			return fmt.Errorf("couldn't store worker %v: %v",
-				v, err)
+			return fmt.Errorf("couldn't store worker %v: %v", v, err)
 		}
 		return nil
 	})

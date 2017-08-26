@@ -83,7 +83,7 @@ func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 	return dropDaemon, dropClient
 }
 
-func runWorkerDaemon(t *testing.T) daemon.Daemon {
+func runWorkerDaemon(t *testing.T) worker.Daemonized {
 	t.Helper()
 
 	cfg := config.Worker{
