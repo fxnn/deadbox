@@ -3,19 +3,24 @@
 
 Access data and devices in your private network without Dynamic DNS, port opening etc.
 
-Implementation is done as far as there's some spare time.
+A program in your private network connects to an internet-accessible server, ready to receive encrypted and authorized requests.
 
-I'm very happy to hear your feedback and ideas. Simply file an issue!
+*I'm very happy to hear your feedback and ideas. Simply file an issue!*
 
 ## Problem
 
 When a user wants to access his private data from the internet, he currently has two possibilities:
-* Either he uses a public cloud, like Google Drive, Microsoft OneDrive etc., which forces him to _always_ store his data on foreign servers.
-* Or he runs a private cloud like ownCloud, Nextcloud or proprietary software found on NAS devices, and allows to access them from the internet.
-  This induces a severe security risk, as using security holes would allow an attacker to enter the users private network and data.
+* Either he uses a public cloud, like Google Drive, Microsoft OneDrive etc.
+  This forces the user to _always_ store his data on foreign servers.
+  He is not able to control who may access these data, as no popular (free of charge) cloud provider has support for encryption.
+* Or he runs a private cloud (ownCloud, Nextcloud) on NAS devices.
+  This forces the user to open a port to his private network behind a public DNS name, inducing a severe security risk.
+  Security holes in the router, operating system or application software allow an attacker to enter the users private network and data.
   The risk of such a security hole is high, as Dynamic DNS and private clouds rely on a broad interface and many different technologies.
-  
-It would be better, if the user wouldn't need to neither store his data on foreign servers, nor open his private network to the public internet.
+
+Having a way of remotely accessing private data,
+without neither storing them on foreign servers nor opening up one's private network using large interfaces,
+would significantly improve security of all parts of the private network.
 
 ## Approach
 _Deadbox_ is an application that combines the concepts of peer to peer and 
@@ -23,14 +28,16 @@ message bus to establish communication between public and private networks.
 It consists of two parts: _workers_ and _drops_.
 * The worker runs on devices in your private network and connects to the
   drop,
-  which is located on a machine somewhere publicy available.
+  which is located on a machine somewhere publicly available.
 * The user accesses the drop through a web-based UI,
   sending usecase based requests like "search for a file by name" or
   "upload a file".
   The drop stores the requests in a queue.
 * The worker requests all items in his queue from the drop,
   processes them and sends the answers back to the drop.
-* Finally, the user loads the results from the drop.
+  From there, they can be requested by the user's UI.
+* All requests and respones are end-to-end encrypted.
+  The drop stores the worker's certified public keys, while the user only needs short-lived key pairs.
 
 ## Advantages
 The user's experience is similar to that of a typical cloud application.
@@ -40,17 +47,19 @@ Still, the system provides more security, due to the following reasons.
 * The private network provides no interface vulnerable to probing techniques like port scanning.
 * The private network exposes a very small interface, protected through well-known authentication techniques.
   It is additionally protected through the server, who won't process unauthenticated requests.
-* The publicy available server does not store private information over a longer time.
-  It will remove all transmitted data after request completion or within a configurable timeout.
-  Therefore, attacking the servers data storage will not provide access to the majority of information.
-* Moreover, using public key cryptography, end-to-end encyption can be used.
-  Then, the server can't see the data at all.
+* The publicly available drop does not store unencrypted private data at all.
+  The data stored by the drop are deleted after request completion or within a configurable timeout.
+  Therefore, attacking the servers data storage will not allow to access private information.
+* Communication with the private network may only happen via the drop,
+  which therefore acts as a shield against DoS or bruteforce attacks.
+  The availability of the drop might be in risk, but the private network is secured.
 
 By combining worker and drop in one single binary and adding some basic routing,
 a peer to peer network emerges, allowing to combine workers from different 
 private networks using tree-like or even rather random structures.
 One deadbox instance could serve as worker and drop at the same time, loading
 requests from foreign drops, providing them to other workers.
+
 This offers a high flexibility in retrieving data and sending commands from/to
 private devices.
 
@@ -62,9 +71,10 @@ effort.
   and connected.
   However, this could be circumvented by letting the drop not only store the
   encrypted requests, but also the encrypted responses for some limited time.
-  Of course, this is not feasible in all use cases.
+  Of course, this is not feasible in all use cases and, in any case, leads
+  to possibly high latency.
 * The user needs to install, configure and maintain instances on at least two
-  different devices.
+  different devices, from which one must be in the public internet.
   This could be circumvented by providing a central cloud service, maybe on a
   subscription base.
 
