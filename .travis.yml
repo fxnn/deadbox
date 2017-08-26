@@ -1,0 +1,20 @@
+language: go
+
+go:
+  - 1.9
+  - tip
+
+matrix:
+  allow_failures:
+    - go: tip
+      # HINT: this is only for interest -- decision to support new versions is made manually
+
+before_install:
+  - go get -t -v ./...
+
+script:
+  - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+after_success:
+  # submit to codecov.io
+  - bash <(curl -s https://codecov.io/bash)
