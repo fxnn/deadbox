@@ -11,10 +11,10 @@ matrix:
 
 before_install:
   - go get -t -v ./...
-  - go get github.com/pierrre/gotestcover
+  - go get github.com/AlekSi/gocoverutil
 
 script:
-  - gotestcover -v -covermode=count -coverprofile=coverage.txt ./...
+  - gocoverutil -coverprofile=cover.out test -v -covermode=count ./...
 
 after_success:
   # submit to codecov.io
