@@ -1,9 +1,12 @@
 # Deadbox
-[![0pdd.com](http://www.0pdd.com/svg?name=fxnn/deadbox)](http://www.0pdd.com/p?name=fxnn/deadbox)
 
 Access data and devices in your private network without Dynamic DNS, port opening etc.
 
 A program in your private network connects to an internet-accessible server, ready to receive encrypted and authorized requests.
+
+[![Build Status](https://travis-ci.org/fxnn/deadbox.svg?branch=master)](https://travis-ci.org/fxnn/deadbox)
+[![codecov](https://codecov.io/gh/fxnn/deadbox/branch/master/graph/badge.svg)](https://codecov.io/gh/fxnn/deadbox)
+[![0pdd.com](http://www.0pdd.com/svg?name=fxnn/deadbox)](http://www.0pdd.com/p?name=fxnn/deadbox)
 
 *I'm very happy to hear your feedback and ideas. Simply file an issue!*
 
