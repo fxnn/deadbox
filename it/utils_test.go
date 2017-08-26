@@ -22,32 +22,38 @@ const dropName = "itDrop"
 const port = "54123"
 
 func assertWorkerTimeoutInFuture(actualWorker model.Worker, t *testing.T) {
+	t.Helper()
 	if actualWorker.Timeout.Before(time.Now()) {
 		t.Fatalf("expected worker timeout to be in the future, but was %s", actualWorker.Timeout)
 	}
 }
 func assertWorkerName(actualWorker model.Worker, workerName string, t *testing.T) {
-	if string(actualWorker.Id) != workerName {
+	t.Helper()
+	if string(actualWorker.Name) != workerName {
 		t.Fatalf("expected worker to be %s, but was %v", workerName, actualWorker)
 	}
 }
 func assertNumberOfWorkers(actualWorkers []model.Worker, expectedNumber int, t *testing.T) {
+	t.Helper()
 	if len(actualWorkers) != expectedNumber {
 		t.Fatalf("expected %d workers, but got %v", expectedNumber, actualWorkers)
 	}
 }
 func assertNumberOfRequests(actualRequests []model.WorkerRequest, expectedNumber int, t *testing.T) {
+	t.Helper()
 	if len(actualRequests) != expectedNumber {
 		t.Fatalf("expected %d requests, but got %v", expectedNumber, actualRequests)
 	}
 }
 func assertRequestId(actualRequest model.WorkerRequest, expectedId string, t *testing.T) {
+	t.Helper()
 	if string(actualRequest.Id) != expectedId {
 		t.Fatalf("expected request to have id %s, but got %s", expectedId, actualRequest.Id)
 	}
 }
 
 func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
+	t.Helper()
 
 	cfg := config.Drop{
 		Name:                       dropName,
@@ -78,6 +84,7 @@ func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 }
 
 func runWorkerDaemon(t *testing.T) daemon.Daemon {
+	t.Helper()
 
 	cfg := config.Worker{
 		Name:    workerName,
@@ -106,6 +113,7 @@ func runWorkerDaemon(t *testing.T) daemon.Daemon {
 }
 
 func stopDaemon(d daemon.Daemon, t *testing.T) {
+	t.Helper()
 	err := d.Stop()
 	if err != nil {
 		t.Error(err)

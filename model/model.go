@@ -27,6 +27,7 @@ type Drop interface {
 type WorkerId string
 type Worker struct {
 	Id      WorkerId
+	Name    string
 	Timeout time.Time
 }
 

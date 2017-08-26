@@ -14,22 +14,27 @@ import (
 
 type facade struct {
 	daemon.Daemon
-	id                          model.WorkerId
+	name                        string
 	db                          *bolt.DB
 	drop                        model.Drop
 	dropUrl                     *url.URL
 	updateRegistrationInterval  time.Duration
 	registrationTimeoutDuration time.Duration
+	registrator
 }
 
 func New(c config.Worker, db *bolt.DB) daemon.Daemon {
+	drop := rest.NewClient(c.DropUrl)
 	f := &facade{
-		id:                          model.WorkerId(c.Name),
-		db:                          db,
-		drop:                        rest.NewClient(c.DropUrl),
-		dropUrl:                     c.DropUrl,
-		registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
-		updateRegistrationInterval:  time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
+		db:                         db,
+		dropUrl:                    c.DropUrl,
+		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
+		registrator: registrator{
+			id:   generateWorkerId(),
+			drop: drop,
+			name: c.Name,
+			registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
+		},
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
@@ -37,7 +42,7 @@ func New(c config.Worker, db *bolt.DB) daemon.Daemon {
 
 func (f *facade) main(stop <-chan struct{}) error {
 	if err := f.updateRegistration(); err != nil {
-		err = fmt.Errorf("worker %s at drop %s could not be registered: %s", f.quotedId(), f.dropUrl, err)
+		err = fmt.Errorf("worker %s at drop %s could not be registered: %s", f.quotedNameAndId(), f.dropUrl, err)
 		return err
 	}
 
@@ -49,19 +54,10 @@ func (f *facade) main(stop <-chan struct{}) error {
 		case <-updateRegistrationTicker.C:
 			if err := f.updateRegistration(); err != nil {
 				return fmt.Errorf("worker %s at drop %s could not update its registration: %s",
-					f.quotedId(), f.dropUrl, err)
+					f.quotedNameAndId(), f.dropUrl, err)
 			}
 		case <-stop:
 			return nil
 		}
 	}
-}
-
-func (f *facade) quotedId() string {
-	return "'" + string(f.id) + "'"
-}
-
-func (f *facade) updateRegistration() error {
-	w := &model.Worker{Id: f.id, Timeout: time.Now().Add(f.registrationTimeoutDuration)}
-	return f.drop.PutWorker(w)
 }
