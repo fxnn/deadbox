@@ -12,15 +12,13 @@ matrix:
 before_install:
   - go get -t -v ./...
   - go get github.com/pierrre/gotestcover
-  - go get github.com/AlekSi/gocoverutil
 
 script:
   # do regular coverage
   - gotestcover -v -covermode=count -coverprofile=coverage.intrapackage.txt ./...
   # do coverage for all packages and tests in `it` package
   - go test -covermode=count -coverprofile=coverage.it.txt -coverpkg=./... ./it
-  # merge the coverage reports
-  - gocoverutil -coverprofile=coverage.txt merge coverage.intrapackage.txt coverage.it.txt
+  # HINT: report merging is done by codecov.io script
 
 after_success:
   # submit to codecov.io
