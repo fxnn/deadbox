@@ -19,6 +19,8 @@ import (
 const dbFileExtension = "boltdb"
 
 func main() {
+
+	// @todo #4 replace dummy config with configuration mechanism
 	var cfg *config.Application = config.Dummy()
 	daemons := startDaemons(cfg)
 

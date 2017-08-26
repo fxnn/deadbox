@@ -12,6 +12,9 @@ import (
 	"github.com/fxnn/deadbox/rest"
 )
 
+// @todo #3 Replace pull with push mechanism (e.g. websocket)
+const pollRequestInterval = 1 * time.Second
+
 type Daemonized interface {
 	daemon.Daemon
 	Id() model.WorkerId
@@ -58,6 +61,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 
 	for {
 		select {
+		// @todo #7 worker processes requests from drop
 		case <-updateRegistrationTicker.C:
 			if err := f.updateRegistration(); err != nil {
 				return fmt.Errorf("worker %s at drop %s could not update its registration: %s",

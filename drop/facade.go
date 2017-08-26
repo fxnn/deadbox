@@ -45,6 +45,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 		return fmt.Errorf("drop %s on %s could not be started: %s", f.quotedName(), f.listenAddress, err)
 	}
 
+	// @todo #10 secure drop against DoS and bruteforce attacks
 	log.Println("drop", f.quotedName(), "on", f.listenAddress, "is now listening")
 	for {
 		select {
@@ -76,9 +77,11 @@ func (f *facade) PutWorkerRequest(id model.WorkerId, request *model.WorkerReques
 }
 
 func (*facade) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.WorkerResponse, error) {
+	// @todo #6 drop must provide responses
 	return model.WorkerResponse{}, fmt.Errorf("implement me")
 }
 
 func (*facade) PutWorkerResponse(model.WorkerId, model.WorkerRequestId, *model.WorkerResponse) error {
+	// @todo #5 drop must accept responses
 	return fmt.Errorf("implement me")
 }
