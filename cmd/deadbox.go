@@ -29,7 +29,6 @@ func main() {
 }
 
 func shutdownDaemons(daemons []daemon.Daemon) {
-	// TODO: Graceful HTTP shutdown with Go1.8
 	for _, d := range daemons {
 		if err := d.Stop(); err != nil {
 			log.Println(err)

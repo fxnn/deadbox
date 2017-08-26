@@ -29,7 +29,7 @@ func (d *daemon) Running() bool {
 }
 
 func (d *daemon) Start() error {
-	// TODO: Make thread safe
+	// @todo: Make Start()/Stop() thread safe
 	if !d.Running() {
 		if d.main == nil {
 			return fmt.Errorf("daemon could not be started: %s", "no main set")
@@ -52,7 +52,6 @@ func (d *daemon) Start() error {
 }
 
 func (d *daemon) Stop() error {
-	// TODO: Make thread safe
 	if d.Running() {
 		d.sendStopEvent()
 		d.waitUntilStopped()

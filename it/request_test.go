@@ -39,7 +39,7 @@ func TestRequest(t *testing.T) {
 	assertNumberOfRequests(requests, 1, t)
 	actualRequest := requests[0]
 	assertRequestId(actualRequest, workerRequestId, t)
-	// TODO: Verify Id, Timeout and Content
+	// @todo: Verify Id, Timeout and Content
 
 }
 
