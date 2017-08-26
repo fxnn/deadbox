@@ -40,6 +40,7 @@ func TestRequest(t *testing.T) {
 	actualRequest := requests[0]
 	assertRequestId(actualRequest, workerRequestId, t)
 	// @todo #2 Verify Id, Timeout and Content
+	// @todo #12 check that request arrived at worker
 
 }
 

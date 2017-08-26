@@ -37,17 +37,21 @@ type facade struct {
 
 func New(c config.Worker, db *bolt.DB) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
+	id := generateWorkerId()
 	f := &facade{
 		db:                         db,
 		dropUrl:                    c.DropUrl,
 		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
 		registrator: registrator{
-			id:   generateWorkerId(),
+			id:   id,
 			drop: drop,
 			name: c.Name,
 			registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
 		},
-		processor: processor{},
+		processor: processor{
+			id:   id,
+			drop: drop,
+		},
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
