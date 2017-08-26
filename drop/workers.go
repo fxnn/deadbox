@@ -3,10 +3,11 @@ package drop
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/gone/log"
-	"time"
 )
 
 const workerBucketName = "worker"

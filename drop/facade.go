@@ -1,14 +1,15 @@
 package drop
 
-import "github.com/fxnn/deadbox/model"
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
 	"github.com/fxnn/deadbox/daemon"
+	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/rest"
-	"log"
-	"time"
 )
 
 type DaemonizedDrop interface {

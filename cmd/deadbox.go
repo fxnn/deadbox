@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/boltdb/bolt"
-	"github.com/fxnn/deadbox/config"
-	"github.com/fxnn/deadbox/daemon"
-	"github.com/fxnn/deadbox/drop"
-	"github.com/fxnn/deadbox/worker"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/boltdb/bolt"
+	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/daemon"
+	"github.com/fxnn/deadbox/drop"
+	"github.com/fxnn/deadbox/worker"
 )
 
 const dbFileExtension = "boltdb"
