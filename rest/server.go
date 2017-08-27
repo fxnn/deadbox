@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"context"
+
 	"github.com/fxnn/deadbox/model"
 )
 
@@ -20,7 +22,7 @@ func NewServer(addr string, drop model.Drop) *Server {
 
 func (s *Server) Close() error {
 	if s.server != nil {
-		var err error = s.server.Shutdown(nil)
+		var err error = s.server.Shutdown(context.Background())
 		s.server = nil
 		if err != nil {
 			<-s.stopped
