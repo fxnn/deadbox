@@ -82,6 +82,6 @@ func (*facade) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.Work
 }
 
 func (*facade) PutWorkerResponse(model.WorkerId, model.WorkerRequestId, *model.WorkerResponse) error {
-	// @todo #5 drop must accept responses
+	// @todo #5 drop must accept responses and delete the associated request
 	return fmt.Errorf("implement me")
 }

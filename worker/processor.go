@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"log"
 
+	"encoding/json"
+
 	"github.com/fxnn/deadbox/model"
 )
+
+const contentTypePlainText = "text/plain"
+const contentTypeJson = "application/json"
 
 type processor struct {
 	id   model.WorkerId
@@ -19,9 +24,41 @@ func (p *processor) pollRequests() error {
 	}
 
 	for _, req := range requests {
-		// @todo #13 process requests. Create an architecture that can have flexible processors
+		// @todo #7 never process a request twice
 		log.Printf("received request %s", req.Id)
+		if err := p.enqueueRequest(req); err != nil {
+			p.sendErrorResponse(req, err)
+		}
 	}
 
 	return nil
+}
+
+func (p *processor) enqueueRequest(req model.WorkerRequest) error {
+	if req.ContentType != contentTypeJson {
+		return fmt.Errorf("ContentType not understood by this worker: %s", req.ContentType)
+	}
+
+	var q *queueItem = &queueItem{}
+	if err := json.Unmarshal(req.Content, q); err != nil {
+		return fmt.Errorf("Content could not be unmarshalled: %s", err)
+	}
+
+	p.addQueueItem(q)
+	return nil
+}
+
+func (p *processor) addQueueItem(q *queueItem) {
+	// @todo #7 create a queue of items to process and process them
+}
+
+func (p *processor) sendErrorResponse(r model.WorkerRequest, err error) {
+	resp := &model.WorkerResponse{
+		Timeout:     r.Timeout,
+		ContentType: contentTypePlainText,
+		Content:     []byte(err.Error()),
+	}
+	if err := p.drop.PutWorkerResponse(p.id, r.Id, resp); err != nil {
+		log.Printf("drop didn't accept my error response for request %s: %s", r.Id, err)
+	}
 }

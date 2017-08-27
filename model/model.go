@@ -33,11 +33,13 @@ type Worker struct {
 
 type WorkerRequestId string
 type WorkerRequest struct {
-	// @todo #8 requests need a payload
-	Id      WorkerRequestId
-	Timeout time.Time
+	Id          WorkerRequestId
+	Timeout     time.Time
+	ContentType string
+	Content     []byte
 }
 type WorkerResponse struct {
-	// @todo #9 responses need a payload
-	Timeout time.Time
+	Timeout     time.Time
+	ContentType string
+	Content     []byte
 }
