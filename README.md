@@ -10,7 +10,9 @@ A program in your private network connects to an internet-accessible server, rea
 
 *I'm very happy to hear your feedback and ideas. Simply file an issue!*
 
-## Problem
+## Idea
+
+### Problem
 
 When a user wants to access his private data from the internet, he currently has two possibilities:
 * Either he uses a public cloud, like Google Drive, Microsoft OneDrive etc.
@@ -25,7 +27,7 @@ Having a way of remotely accessing private data,
 without neither storing them on foreign servers nor opening up one's private network using large interfaces,
 would significantly improve security of all parts of the private network.
 
-## Approach
+### Approach
 _Deadbox_ is an application that combines the concepts of peer to peer and 
 message bus to establish communication between public and private networks.
 It consists of two parts: _workers_ and _drops_.
@@ -42,7 +44,7 @@ It consists of two parts: _workers_ and _drops_.
 * All requests and respones are end-to-end encrypted.
   The drop stores the worker's certified public keys, while the user only needs short-lived key pairs.
 
-## Advantages
+### Advantages
 The user's experience is similar to that of a typical cloud application.
 He uploads and downloads files or accesses other functionality through a comfortable web-based UI.
 
@@ -66,7 +68,7 @@ requests from foreign drops, providing them to other workers.
 This offers a high flexibility in retrieving data and sending commands from/to
 private devices.
 
-## Disadvantages
+### Disadvantages
 Compared to a centralized cloud-based storage solution,
 the _deadbox_ suffers under limited availability and increased configuration 
 effort.
@@ -81,7 +83,7 @@ effort.
   This could be circumvented by providing a central cloud service, maybe on a
   subscription base.
 
-## Challenges
+### Challenges
 * While the worker needs to open the connection to the drop,
   the drop must be able to push requests to the worker, so that the user won't 
   experience a high latency.
@@ -93,7 +95,7 @@ effort.
   Instead, it would be better if both could rely on a common third party for 
   establishing authentication, as it is possible with e.g. OpenID.
 
-## Use cases and examples
+### Use cases and examples
 The _deadbox_ could be used in following scenarios.
 * A user wants to access his home NAS from the internet, while retaining a high level of security.
 * A user wants to orchestrate smart home devices.
@@ -111,6 +113,9 @@ Possible use cases are as follows.
 * The user retrieves data from a smart home device, like a webcam or a thermostat.
 
 ## Specification
+
+This spec serves as a guideline for the current implementation.
+However, it is subject to change, and some points might be of quite low priority.
 
 ### Security
 
