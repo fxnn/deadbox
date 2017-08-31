@@ -24,8 +24,9 @@ type facade struct {
 	daemon.Daemon
 	name          string
 	listenAddress string
-	workers       *workers
-	requests      *requests
+	*workers
+	*requests
+	*responses
 }
 
 func New(c config.Drop, db *bolt.DB) Daemonized {
@@ -34,6 +35,7 @@ func New(c config.Drop, db *bolt.DB) Daemonized {
 		listenAddress: c.ListenAddress,
 		workers:       &workers{db, time.Duration(c.MaxWorkerTimeoutInSeconds) * time.Second},
 		requests:      &requests{db, time.Duration(c.MaxRequestTimeoutInSeconds) * time.Second},
+		responses:     &responses{db, time.Duration(c.MaxRequestTimeoutInSeconds) * time.Second},
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
@@ -58,30 +60,4 @@ func (f *facade) main(stop <-chan struct{}) error {
 
 func (f *facade) quotedName() string {
 	return "'" + f.name + "'"
-}
-
-func (f *facade) Workers() ([]model.Worker, error) {
-	return f.workers.Workers()
-}
-
-func (f *facade) PutWorker(w *model.Worker) error {
-	return f.workers.PutWorker(w)
-}
-
-func (f *facade) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, error) {
-	return f.requests.WorkerRequests(id)
-}
-
-func (f *facade) PutWorkerRequest(id model.WorkerId, request *model.WorkerRequest) error {
-	return f.requests.PutWorkerRequest(id, request)
-}
-
-func (*facade) WorkerResponse(model.WorkerId, model.WorkerRequestId) (model.WorkerResponse, error) {
-	// @todo #6 drop must provide responses
-	return model.WorkerResponse{}, fmt.Errorf("implement me")
-}
-
-func (*facade) PutWorkerResponse(model.WorkerId, model.WorkerRequestId, *model.WorkerResponse) error {
-	// @todo #5 drop must accept responses and delete the associated request
-	return fmt.Errorf("implement me")
 }

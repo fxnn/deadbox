@@ -66,12 +66,16 @@ func (c *client) post(path string, source interface{}) error {
 		return fmt.Errorf("POST request to '%s' failed: %s", path, err)
 	}
 
+	return c.assertStatusOk(resp)
+}
+
+func (c *client) assertStatusOk(resp *http.Response) error {
 	if resp.StatusCode != http.StatusOK {
 		var bodyStr string = "<response body not available>"
 		if bodyBytes, err := ioutil.ReadAll(resp.Body); err == nil {
 			bodyStr = string(bodyBytes)
 		}
-		return fmt.Errorf("POST request to '%s' returned code %d: %s", path, resp.StatusCode, bodyStr)
+		return fmt.Errorf("%s request to '%s' returned code %d: %s", resp.Request.Method, resp.Request.URL, resp.StatusCode, bodyStr)
 	}
 
 	return nil
@@ -84,6 +88,10 @@ func (c *client) get(path string, target interface{}) error {
 	resp, err := http.Get(address)
 	if err != nil {
 		return fmt.Errorf("GET request to '%s' failed: %s", address, err)
+	}
+
+	if err := c.assertStatusOk(resp); err != nil {
+		return err
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(target)

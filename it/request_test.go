@@ -27,6 +27,7 @@ func TestRequest(t *testing.T) {
 			Id:      workerRequestId,
 			Timeout: time.Now().Add(10 * time.Second),
 		}
+		response model.WorkerResponse
 	)
 
 	if err := drop.PutWorkerRequest(worker.Id(), &request); err != nil {
@@ -40,7 +41,15 @@ func TestRequest(t *testing.T) {
 	actualRequest := requests[0]
 	assertRequestId(actualRequest, workerRequestId, t)
 	// @todo #2 Verify Id, Timeout and Content
-	// @todo #12 check that request arrived at worker
+
+	// HINT: Give worker time to send response
+	time.Sleep(1000 * time.Millisecond)
+
+	if response, err = drop.WorkerResponse(worker.Id(), request.Id); err != nil {
+		t.Fatalf("receiving the response failed: %s", err)
+	}
+	assertResponseContentType(response, "text/plain", t)
+	assertResponseContent(response, "ContentType not understood by this worker: ", t)
 
 }
 

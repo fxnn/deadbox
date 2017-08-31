@@ -30,6 +30,12 @@ func newRouter(drop model.Drop) *router {
 	handler.Path("/worker/{workerId}/request").
 		HandlerFunc(result.handlePutWorkerRequest).
 		Methods("POST")
+	handler.Path("/worker/{workerId}/response/{requestId}").
+		HandlerFunc(result.handleGetWorkerResponse).
+		Methods("GET")
+	handler.Path("/worker/{workerId}/response/{requestId}").
+		HandlerFunc(result.handlePutWorkerResponse).
+		Methods("POST")
 
 	return result
 }
@@ -45,6 +51,13 @@ func (r *router) workerId(rq *http.Request) (model.WorkerId, error) {
 	}
 	return model.WorkerId(workerId), nil
 }
+func (r *router) requestId(rq *http.Request) (model.WorkerRequestId, error) {
+	requestId := mux.Vars(rq)["requestId"]
+	if requestId == "" {
+		return "", fmt.Errorf("requestId must be set")
+	}
+	return model.WorkerRequestId(requestId), nil
+}
 func (r *router) outputJson(rw http.ResponseWriter, v interface{}) error {
 	rw.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(rw).Encode(v)
@@ -56,12 +69,12 @@ func (r *router) inputJson(rq *http.Request, v interface{}) error {
 func (r *router) requestInvalid(rw http.ResponseWriter, err error) {
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(http.StatusBadRequest)
-	fmt.Fprintf(rw, "Your request was invalid: %s", err)
+	fmt.Fprintf(rw, "your request was invalid: %s", err)
 }
 func (r *router) internalServerError(rw http.ResponseWriter, err error) {
 	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(rw, "Couldn't handle your request: %s", err)
+	fmt.Fprintf(rw, "couldn't handle your request: %s", err)
 }
 
 func (r *router) handleGetAllWorkers(
@@ -139,5 +152,61 @@ func (r *router) handlePutWorkerRequest(
 
 	if err := r.drop.PutWorkerRequest(workerId, request); err != nil {
 		r.internalServerError(rw, fmt.Errorf("couldn't put worker request: %s", err))
+	}
+}
+
+func (r *router) handleGetWorkerResponse(
+	rw http.ResponseWriter,
+	rq *http.Request,
+) {
+	workerId, err := r.workerId(rq)
+	if err != nil {
+		r.requestInvalid(rw, err)
+	}
+	requestId, err := r.requestId(rq)
+	if err != nil {
+		r.requestInvalid(rw, err)
+		return
+	}
+
+	result, err := r.drop.WorkerResponse(workerId, requestId)
+	if err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't get worker response: %s", err))
+		return
+	}
+
+	if err := r.outputJson(rw, result); err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't encode worker response: %s", err))
+	}
+}
+
+func (r *router) handlePutWorkerResponse(
+	rw http.ResponseWriter,
+	rq *http.Request,
+) {
+	var (
+		workerId  model.WorkerId
+		requestId model.WorkerRequestId
+		response  *model.WorkerResponse
+		err       error
+	)
+
+	if workerId, err = r.workerId(rq); err != nil {
+		r.requestInvalid(rw, err)
+		return
+	}
+	if requestId, err = r.requestId(rq); err != nil {
+		r.requestInvalid(rw, err)
+		return
+	}
+
+	response = &model.WorkerResponse{}
+	if err = r.inputJson(rq, response); err != nil {
+		r.requestInvalid(rw, fmt.Errorf("couldn't read response: %s", err))
+		return
+	}
+
+	if err := r.drop.PutWorkerResponse(workerId, requestId, response); err != nil {
+		r.internalServerError(rw, fmt.Errorf("couldn't put worker response: %s", err))
 	}
 }
