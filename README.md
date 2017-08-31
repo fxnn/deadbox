@@ -188,7 +188,7 @@ It will provide at least the following endpoints.
 * `POST /worker/{workerId}/request` allows users to file a new 
   request targeted to an worker.
   This endpoint is idempotent.
-* `POST /worker/{workerId}/response` is called by a worker to
+* `POST /worker/{workerId}/response/{requestId}` is called by a worker to
   transport the response to a request.
   This endpoint is idempotent.
 * `GET /worker/{workerId}/response/{requestId}` allows users to retrieve the
