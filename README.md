@@ -112,6 +112,15 @@ Possible use cases are as follows.
 * The user controls a smart home device, like setting the room temperature.
 * The user retrieves data from a smart home device, like a webcam or a thermostat.
 
+### Related Work
+The following projects are similar to _deadbox_.
+* [Syncthing](https://syncthing.net) is an open source, multi platform synchronization solution.
+  If you want to synchronize the same set of directories between the same set of devices for some time, use Syncthing! 
+  However, if you'd rather have some publicly reachable endpoint for your private devices and use it to perform actions (of any kind) on your device, use _deadbox_.
+* [ngrok](https://ngrok.com/) is a proprietary tunnel to your device.
+  If you want to access any kind of webapp or TCP service (like Nextcloud), running on your device, itself running behind a firewall, from the public internet, use ngrok.
+  However, if you'd rather have a fully open source solution, without the need to run multiple server components, or if you want to support non-interactive scenarios, where you want to enqueue actions (like sending files) while the target device is offline, use _deadbox_.
+
 ## Specification
 
 This spec serves as a guideline for the current implementation.
