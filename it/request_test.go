@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+	"fmt"
+
 	"github.com/fxnn/deadbox/model"
 )
 
@@ -24,13 +27,15 @@ func TestRequest(t *testing.T) {
 		err      error
 		requests []model.WorkerRequest
 		request  model.WorkerRequest = model.WorkerRequest{
-			Id:      workerRequestId,
-			Timeout: time.Now().Add(10 * time.Second),
+			Id:          workerRequestId,
+			Timeout:     time.Now().Add(10 * time.Second),
+			ContentType: "application/json",
+			Content:     emptyRequestContent("invalid-request-type"),
 		}
 		response model.WorkerResponse
 	)
 
-	if err := drop.PutWorkerRequest(worker.Id(), &request); err != nil {
+	if err = drop.PutWorkerRequest(worker.Id(), &request); err != nil {
 		t.Fatalf("filing a new request failed: %s", err)
 	}
 	if requests, err = drop.WorkerRequests(worker.Id()); err != nil {
@@ -49,8 +54,22 @@ func TestRequest(t *testing.T) {
 		t.Fatalf("receiving the response failed: %s", err)
 	}
 	assertResponseContentType(response, "text/plain", t)
-	assertResponseContent(response, "ContentType not understood by this worker: ", t)
+	assertResponseContent(response, "requestType not known: invalid-request-type", t)
 
+}
+
+func emptyRequestContent(requestType string) []byte {
+	var (
+		m   map[string]string = make(map[string]string)
+		b   []byte
+		err error
+	)
+	m["requestType"] = requestType
+	b, err = json.Marshal(m)
+	if err != nil {
+		panic(fmt.Errorf("marshalling empty request content failed: %s", err))
+	}
+	return b
 }
 
 func TestDuplicateRequestFails(t *testing.T) {
@@ -64,12 +83,10 @@ func TestDuplicateRequestFails(t *testing.T) {
 	// HINT: drop and worker some time to settle
 	time.Sleep(100 * time.Millisecond)
 
-	var (
-		request model.WorkerRequest = model.WorkerRequest{
-			Id:      workerRequestId,
-			Timeout: time.Now().Add(10 * time.Second),
-		}
-	)
+	var request model.WorkerRequest = model.WorkerRequest{
+		Id:      workerRequestId,
+		Timeout: time.Now().Add(10 * time.Second),
+	}
 
 	if err := drop.PutWorkerRequest(worker.Id(), &request); err != nil {
 		t.Fatalf("filing a new request failed: %s", err)

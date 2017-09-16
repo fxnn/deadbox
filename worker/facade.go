@@ -25,8 +25,9 @@ type Daemonized interface {
 
 type facade struct {
 	daemon.Daemon
-	registrator
-	processor
+	registrations
+	requests
+	*requestProcessors
 	name                        string
 	db                          *bolt.DB
 	drop                        model.Drop
@@ -42,15 +43,18 @@ func New(c config.Worker, db *bolt.DB) Daemonized {
 		db:                         db,
 		dropUrl:                    c.DropUrl,
 		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
-		registrator: registrator{
+		registrations: registrations{
 			id:   id,
 			drop: drop,
 			name: c.Name,
 			registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
 		},
-		processor: processor{
+		requests: requests{
 			id:   id,
 			drop: drop,
+		},
+		requestProcessors: &requestProcessors{
+			processorsByRequestType: make(map[string]RequestProcessor),
 		},
 	}
 	f.Daemon = daemon.New(f.main)
@@ -73,7 +77,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 		select {
 		case <-pollRequestTicker.C:
 			// @todo #3 Replace pull with push mechanism (e.g. websocket)
-			if err := f.pollRequests(); err != nil {
+			if err := f.pollRequests(f.requestProcessors); err != nil {
 				log.Printf("worker %s at drop %s could not poll requests: %s", f.QuotedNameAndId(),
 					f.dropUrl, err)
 			}

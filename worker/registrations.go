@@ -13,14 +13,14 @@ import (
 
 const idBytesEntropy = 64
 
-type registrator struct {
+type registrations struct {
 	id                          model.WorkerId
 	name                        string
 	drop                        model.Drop
 	registrationTimeoutDuration time.Duration
 }
 
-func (r *registrator) updateRegistration() error {
+func (r *registrations) updateRegistration() error {
 	w := &model.Worker{
 		Id:      r.id,
 		Name:    r.name,
@@ -29,15 +29,15 @@ func (r *registrator) updateRegistration() error {
 	return r.drop.PutWorker(w)
 }
 
-func (r *registrator) Id() model.WorkerId {
+func (r *registrations) Id() model.WorkerId {
 	return r.id
 }
 
-func (r *registrator) Name() string {
+func (r *registrations) Name() string {
 	return r.name
 }
 
-func (r *registrator) QuotedNameAndId() string {
+func (r *registrations) QuotedNameAndId() string {
 	return fmt.Sprintf("'%s' (%s)", r.name, r.id)
 }
 
