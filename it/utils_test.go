@@ -55,7 +55,8 @@ func assertRequestId(actualRequest model.WorkerRequest, expectedId string, t *te
 func assertResponseContentType(actualResponse model.WorkerResponse, expectedContentType string, t *testing.T) {
 	t.Helper()
 	if string(actualResponse.ContentType) != expectedContentType {
-		t.Fatalf("expected response to have content type '%s', but got '%s'", expectedContentType, actualResponse.ContentType)
+		t.Fatalf("expected response to have content type '%s', but got '%s' and content '%s'", expectedContentType, actualResponse.ContentType,
+			actualResponse.Content)
 	}
 }
 func assertResponseContent(actualResponse model.WorkerResponse, expectedContent string, t *testing.T) {

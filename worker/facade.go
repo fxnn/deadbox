@@ -54,7 +54,7 @@ func New(c config.Worker, db *bolt.DB) Daemonized {
 			drop: drop,
 		},
 		requestProcessors: &requestProcessors{
-			processorsByRequestType: createProcessorsByRequestTypeMap(c),
+			processorsById: createRequestProcessorsByIdMap(c),
 		},
 	}
 	f.Daemon = daemon.New(f.main)

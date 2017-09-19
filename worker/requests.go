@@ -46,25 +46,25 @@ func (r *requests) processRequest(request model.WorkerRequest, processors *reque
 		return fmt.Errorf("content could not be unmarshalled: %s", err)
 	}
 
-	requestType, ok := content["requestType"].(string)
+	requestProcessorId, ok := content["requestProcessorId"].(string)
 	if !ok {
-		return fmt.Errorf("requestType field of type string expected")
+		return fmt.Errorf("exected requestProcessorId field of type string")
 	}
 
-	processor, ok := processors.requestProcessorForType(requestType)
+	processor, ok := processors.requestProcessorForId(requestProcessorId)
 	if !ok {
-		return fmt.Errorf("requestType not known: %s", requestType)
+		return fmt.Errorf("requestProcessorId not known: %s", requestProcessorId)
 	}
 
-	processorContent := processor.EmptyRequestContent()
+	processorContent := processor.EmptyContent()
 	if err := json.Unmarshal(request.Content, &processorContent); err != nil {
-		return fmt.Errorf("content could not be unmarshalled for requestType %s: %s", requestType, err)
+		return fmt.Errorf("content could not be unmarshalled for requestProcessorId %s: %s", requestProcessorId, err)
 	}
 
-	processorResponse := processor.ProcessRequest(processorContent)
+	processorResponse := processor.Process(processorContent)
 
 	if responseContent, err := json.Marshal(processorResponse); err != nil {
-		return fmt.Errorf("response for requestType %s could not be unmarshalled: %s", requestType, err)
+		return fmt.Errorf("response for requestProcessorId %s could not be unmarshalled: %s", requestProcessorId, err)
 	} else {
 		r.sendResponse(request, contentTypeJson, responseContent)
 	}

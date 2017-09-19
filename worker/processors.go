@@ -2,25 +2,25 @@ package worker
 
 import (
 	"github.com/fxnn/deadbox/config"
-	"github.com/fxnn/deadbox/processor"
-	"github.com/fxnn/deadbox/processor/echo"
+	"github.com/fxnn/deadbox/request"
+	"github.com/fxnn/deadbox/request/echo"
 )
 
 type requestProcessors struct {
-	processorsByRequestType map[string]processor.RequestProcessor
+	processorsById map[string]request.Processor
 }
 
-func (r *requestProcessors) requestProcessorForType(requestType string) (processor.RequestProcessor, bool) {
-	p, ok := r.processorsByRequestType[requestType]
+func (r *requestProcessors) requestProcessorForId(requestProcessorId string) (request.Processor, bool) {
+	p, ok := r.processorsById[requestProcessorId]
 	return p, ok
 }
 
-func createProcessorsByRequestTypeMap(c config.Worker) (result map[string]processor.RequestProcessor) {
-	result = make(map[string]processor.RequestProcessor)
+func createRequestProcessorsByIdMap(c config.Worker) (result map[string]request.Processor) {
+	result = make(map[string]request.Processor)
 	addRequestProcessor(result, echo.New())
 	return
 }
 
-func addRequestProcessor(processors map[string]processor.RequestProcessor, processor processor.RequestProcessor) {
-	processors[processor.RequestType()] = processor
+func addRequestProcessor(processors map[string]request.Processor, processor request.Processor) {
+	processors[processor.Id()] = processor
 }

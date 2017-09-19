@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/fxnn/deadbox/model"
-	"github.com/fxnn/deadbox/processor/echo"
+	"github.com/fxnn/deadbox/request/echo"
 )
 
 const workerRequestId = "workerRequestId"
@@ -55,7 +55,7 @@ func TestRequest(t *testing.T) {
 		t.Fatalf("receiving the response failed: %s", err)
 	}
 	assertResponseContentType(response, "application/json", t)
-	assertResponseContent(response, "{\"echo\":\"test content\",\"requestType\":\"github.com/fxnn/deadbox/processor/echo 1.0\"}", t)
+	assertResponseContent(response, "{\"echo\":\"test content\",\"requestProcessorId\":\"github.com/fxnn/deadbox/request/echo 1.0\"}", t)
 
 }
 
@@ -65,7 +65,7 @@ func echoRequest(echoString string) []byte {
 		b   []byte
 		err error
 	)
-	m["requestType"] = echo.RequestType
+	m["requestProcessorId"] = echo.RequestProcessorId
 	m["echo"] = echoString
 	b, err = json.Marshal(m)
 	if err != nil {
