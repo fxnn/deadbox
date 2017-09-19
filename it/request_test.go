@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/fxnn/deadbox/model"
+	"github.com/fxnn/deadbox/processor/echo"
 )
 
 const workerRequestId = "workerRequestId"
@@ -30,7 +31,7 @@ func TestRequest(t *testing.T) {
 			Id:          workerRequestId,
 			Timeout:     time.Now().Add(10 * time.Second),
 			ContentType: "application/json",
-			Content:     emptyRequestContent("invalid-request-type"),
+			Content:     echoRequest("test content"),
 		}
 		response model.WorkerResponse
 	)
@@ -53,21 +54,22 @@ func TestRequest(t *testing.T) {
 	if response, err = drop.WorkerResponse(worker.Id(), request.Id); err != nil {
 		t.Fatalf("receiving the response failed: %s", err)
 	}
-	assertResponseContentType(response, "text/plain", t)
-	assertResponseContent(response, "requestType not known: invalid-request-type", t)
+	assertResponseContentType(response, "application/json", t)
+	assertResponseContent(response, "{\"echo\":\"test content\",\"requestType\":\"github.com/fxnn/deadbox/processor/echo 1.0\"}", t)
 
 }
 
-func emptyRequestContent(requestType string) []byte {
+func echoRequest(echoString string) []byte {
 	var (
 		m   map[string]string = make(map[string]string)
 		b   []byte
 		err error
 	)
-	m["requestType"] = requestType
+	m["requestType"] = echo.RequestType
+	m["echo"] = echoString
 	b, err = json.Marshal(m)
 	if err != nil {
-		panic(fmt.Errorf("marshalling empty request content failed: %s", err))
+		panic(fmt.Errorf("marshalling echo request content failed: %s", err))
 	}
 	return b
 }

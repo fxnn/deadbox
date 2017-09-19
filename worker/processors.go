@@ -1,30 +1,26 @@
 package worker
 
 import (
-	"fmt"
+	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/processor"
+	"github.com/fxnn/deadbox/processor/echo"
 )
 
-type RequestProcessor interface {
-	RequestType() string
-	EmptyRequestContent() interface{}
-	ProcessRequest(requestContent interface{}) interface{}
-}
-
 type requestProcessors struct {
-	processorsByRequestType map[string]RequestProcessor
+	processorsByRequestType map[string]processor.RequestProcessor
 }
 
-func (r *requestProcessors) AddRequestProcessor(p RequestProcessor) error {
-	t := p.RequestType()
-	if _, ok := r.processorsByRequestType[t]; ok {
-		return fmt.Errorf("there is already a processor for RequestType: %s", t)
-	}
-
-	r.processorsByRequestType[t] = p
-	return nil
-}
-
-func (r *requestProcessors) requestProcessorForType(requestType string) (RequestProcessor, bool) {
+func (r *requestProcessors) requestProcessorForType(requestType string) (processor.RequestProcessor, bool) {
 	p, ok := r.processorsByRequestType[requestType]
 	return p, ok
+}
+
+func createProcessorsByRequestTypeMap(c config.Worker) (result map[string]processor.RequestProcessor) {
+	result = make(map[string]processor.RequestProcessor)
+	addRequestProcessor(result, echo.New())
+	return
+}
+
+func addRequestProcessor(processors map[string]processor.RequestProcessor, processor processor.RequestProcessor) {
+	processors[processor.RequestType()] = processor
 }

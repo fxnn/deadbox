@@ -57,7 +57,7 @@ func (r *requests) processRequest(request model.WorkerRequest, processors *reque
 	}
 
 	processorContent := processor.EmptyRequestContent()
-	if err := json.Unmarshal(request.Content, processorContent); err != nil {
+	if err := json.Unmarshal(request.Content, &processorContent); err != nil {
 		return fmt.Errorf("content could not be unmarshalled for requestType %s: %s", requestType, err)
 	}
 
