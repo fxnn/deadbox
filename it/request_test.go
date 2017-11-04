@@ -27,7 +27,7 @@ func TestRequest(t *testing.T) {
 	var (
 		err      error
 		requests []model.WorkerRequest
-		request  model.WorkerRequest = model.WorkerRequest{
+		request  = model.WorkerRequest{
 			Id:          workerRequestId,
 			Timeout:     time.Now().Add(10 * time.Second),
 			ContentType: "application/json",
@@ -55,13 +55,13 @@ func TestRequest(t *testing.T) {
 		t.Fatalf("receiving the response failed: %s", err)
 	}
 	assertResponseContentType(response, "application/json", t)
-	assertResponseContent(response, "{\"echo\":\"test content\",\"requestProcessorId\":\"github.com/fxnn/deadbox/request/echo 1.0\"}", t)
+	assertResponseContent(response, "{\"echo\":\"test content\",\"requestProcessorId\":\"request-processor:github.com/fxnn/deadbox:echo:1.0\"}", t)
 
 }
 
 func echoRequest(echoString string) []byte {
 	var (
-		m   map[string]string = make(map[string]string)
+		m   = make(map[string]string)
 		b   []byte
 		err error
 	)
@@ -85,7 +85,7 @@ func TestDuplicateRequestFails(t *testing.T) {
 	// HINT: drop and worker some time to settle
 	time.Sleep(100 * time.Millisecond)
 
-	var request model.WorkerRequest = model.WorkerRequest{
+	var request = model.WorkerRequest{
 		Id:      workerRequestId,
 		Timeout: time.Now().Add(10 * time.Second),
 	}

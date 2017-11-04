@@ -5,7 +5,7 @@ import (
 )
 
 const interfaceVersion = "1.0"
-const RequestProcessorId = "github.com/fxnn/deadbox/request/echo " + interfaceVersion
+const RequestProcessorId = "request-processor:github.com/fxnn/deadbox:echo:" + interfaceVersion
 
 type requestProcessor struct{}
 
