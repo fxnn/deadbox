@@ -220,7 +220,8 @@ As for a worker entry, at least the following information need to be contained.
   The timestamp must be in the future.
   The Drop might apply a smaller timeout than requested.
 * The request types supported by the Worker, given as URN.
-* The Workers public key, used to encrypt the requests.
+* The Workers public key, used to encrypt the requests, given in ASN1
+  format.
 
 As for a queue entry, which is a request, at least the following information
 need to be contained.

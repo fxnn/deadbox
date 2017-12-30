@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -16,12 +17,15 @@ import (
 	"github.com/fxnn/deadbox/worker"
 )
 
-const dbFileExtension = "boltdb"
+const (
+	filePermOnlyUserCanReadOrWrite = 0600
+	dbFileExtension                = "boltdb"
+)
 
 func main() {
 
 	// @todo #4 replace dummy config with configuration mechanism
-	var cfg *config.Application = config.Dummy()
+	var cfg = config.Dummy()
 	daemons := startDaemons(cfg)
 
 	waitForShutdownRequest()
@@ -39,7 +43,7 @@ func shutdownDaemons(daemons []daemon.Daemon) {
 }
 
 func startDaemons(cfg *config.Application) []daemon.Daemon {
-	var daemons []daemon.Daemon = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
+	var daemons = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
 
 	for _, dp := range cfg.Drops {
 		daemons = append(daemons, serveDrop(dp, cfg))
@@ -58,16 +62,38 @@ func waitForShutdownRequest() {
 }
 
 func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
-	var b *bolt.DB = openDb(acfg, wcfg.Name)
-	var d daemon.Daemon = worker.New(wcfg, b)
+	var b = openDb(acfg, wcfg.Name)
+	var k = readOrCreatePrivateKeyFile(wcfg.PrivateKeyFile)
+	var d daemon.Daemon = worker.New(wcfg, b, k)
 	d.OnStop(b.Close)
 	d.Start()
 
 	return d
 }
 
+func readOrCreatePrivateKeyFile(fileName string) []byte {
+	bytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			panic(fmt.Errorf("couldn't read file %s: %s", fileName, err))
+		}
+
+		bytes, err = worker.GeneratePrivateKeyBytes()
+		if err != nil {
+			panic(fmt.Errorf("couldn't generate private key: %s", err))
+		}
+
+		err = ioutil.WriteFile(fileName, bytes, filePermOnlyUserCanReadOrWrite)
+		if err != nil {
+			panic(fmt.Errorf("couldn't write generated private key to file %s: %s", fileName, err))
+		}
+	}
+
+	return bytes
+}
+
 func serveDrop(dcfg config.Drop, acfg *config.Application) daemon.Daemon {
-	var b *bolt.DB = openDb(acfg, dcfg.Name)
+	var b = openDb(acfg, dcfg.Name)
 	var d daemon.Daemon = drop.New(dcfg, b)
 	d.OnStop(b.Close)
 	d.Start()

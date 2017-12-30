@@ -22,4 +22,8 @@ type Worker struct {
 	// RegistrationTimeoutInSeconds specifies how long the registration at the drop is requested to be valid without
 	// sending an update.
 	RegistrationTimeoutInSeconds int
+
+	// PrivateKeyFile refers to a file containing the ASN.1 PKCS#1 DER encoded private RSA key.
+	// If not existant, it will be created.
+	PrivateKeyFile string
 }

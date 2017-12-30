@@ -9,6 +9,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/rest"
@@ -34,14 +35,16 @@ type facade struct {
 	dropUrl                     *url.URL
 	updateRegistrationInterval  time.Duration
 	registrationTimeoutDuration time.Duration
+	privateKeyBytes             []byte
 }
 
-func New(c config.Worker, db *bolt.DB) Daemonized {
+func New(c config.Worker, db *bolt.DB, privateKeyBytes []byte) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
 	id := generateWorkerId()
 	f := &facade{
 		db:                         db,
 		dropUrl:                    c.DropUrl,
+		privateKeyBytes:            privateKeyBytes,
 		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
 		registrations: registrations{
 			id:   id,
@@ -62,7 +65,18 @@ func New(c config.Worker, db *bolt.DB) Daemonized {
 }
 
 func (f *facade) main(stop <-chan struct{}) error {
-	if err := f.updateRegistration(); err != nil {
+	var err error
+
+	privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(f.privateKeyBytes)
+	if err != nil {
+		return fmt.Errorf("worker %s could not read its private key from file %s: %s", f.QuotedNameAndId(), f.privateKeyBytes, err)
+	}
+	publicKeyBytes, err := crypto.GeneratePublicKeyBytes(privateKey)
+	if err != nil {
+		return fmt.Errorf("worker %s could not export its public key: %s", f.QuotedNameAndId(), err)
+	}
+
+	if err = f.updateRegistration(publicKeyBytes); err != nil {
 		err = fmt.Errorf("worker %s at drop %s could not be registered: %s", f.QuotedNameAndId(), f.dropUrl, err)
 		return err
 	}
@@ -77,17 +91,25 @@ func (f *facade) main(stop <-chan struct{}) error {
 		select {
 		case <-pollRequestTicker.C:
 			// @todo #3 Replace pull with push mechanism (e.g. websocket)
-			if err := f.pollRequests(f.requestProcessors); err != nil {
+			if err := f.pollRequests(f.requestProcessors, privateKey); err != nil {
 				log.Printf("worker %s at drop %s could not poll requests: %s", f.QuotedNameAndId(),
 					f.dropUrl, err)
 			}
 		case <-updateRegistrationTicker.C:
-			if err := f.updateRegistration(); err != nil {
+			if err := f.updateRegistration(publicKeyBytes); err != nil {
 				return fmt.Errorf("worker %s at drop %s could not update its registration: %s",
 					f.QuotedNameAndId(), f.dropUrl, err)
 			}
 		case <-stop:
 			return nil
 		}
+	}
+}
+
+func GeneratePrivateKeyBytes() ([]byte, error) {
+	if key, err := crypto.GeneratePrivateKey(); err != nil {
+		return nil, fmt.Errorf("could not generate private key: %s", err)
+	} else {
+		return crypto.MarshalPrivateKeyToPEMBytes(key), nil
 	}
 }

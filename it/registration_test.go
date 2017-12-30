@@ -10,7 +10,7 @@ func TestRegistration(t *testing.T) {
 	daemon, drop := runDropDaemon(t)
 	defer stopDaemon(daemon, t)
 
-	worker := runWorkerDaemon(t)
+	worker, _ := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
 
 	// HINT: Give the worker some time to register

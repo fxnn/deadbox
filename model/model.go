@@ -29,17 +29,25 @@ type Worker struct {
 	Id      WorkerId
 	Name    string
 	Timeout time.Time
+
+	// PublicKey contains the public RSA key of the worker, marshalled in ASN1 format.
+	PublicKey []byte
 }
 
 type WorkerRequestId string
 type WorkerRequest struct {
-	Id          WorkerRequestId
-	Timeout     time.Time
+	Id      WorkerRequestId
+	Timeout time.Time
+	Content []byte
+
+	// ContentType describes the kind of data contained in Content.
 	ContentType string
-	Content     []byte
+
+	// EncryptionType describes the kind of encryption applied to Content.
+	EncryptionType string
 }
 type WorkerResponse struct {
 	Timeout     time.Time
-	ContentType string
 	Content     []byte
+	ContentType string
 }

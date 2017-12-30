@@ -1,11 +1,13 @@
 package worker
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"log"
 
 	"encoding/json"
 
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/model"
 )
 
@@ -17,7 +19,7 @@ type requests struct {
 	drop model.Drop
 }
 
-func (r *requests) pollRequests(p *requestProcessors) error {
+func (r *requests) pollRequests(p *requestProcessors, k *rsa.PrivateKey) error {
 	qs, err := r.drop.WorkerRequests(r.id)
 	if err != nil {
 		return fmt.Errorf("drop returned error: %s", err)
@@ -25,8 +27,8 @@ func (r *requests) pollRequests(p *requestProcessors) error {
 
 	for _, q := range qs {
 		// @todo #7 never process a request twice
-		log.Printf("received request %s", q.Id)
-		if err = r.processRequest(q, p); err != nil {
+		log.Printf("worker %s received request %s", r.id, q.Id)
+		if err = r.processRequest(q, p, k); err != nil {
 			r.sendErrorResponse(q, err)
 		}
 	}
@@ -34,15 +36,22 @@ func (r *requests) pollRequests(p *requestProcessors) error {
 	return nil
 }
 
-func (r *requests) processRequest(request model.WorkerRequest, processors *requestProcessors) error {
+func (r *requests) processRequest(
+	request model.WorkerRequest,
+	processors *requestProcessors,
+	key *rsa.PrivateKey,
+) error {
 	if request.ContentType != contentTypeJson {
 		return fmt.Errorf("ContentType not understood by this worker: %s", request.ContentType)
 	}
 
-	// @todo #7 decrypt requests
+	decryptedContent, err := crypto.DecryptRequest(request, key)
+	if err != nil {
+		return fmt.Errorf("decrypting content failed: %s", err)
+	}
 
 	var content map[string]interface{}
-	if err := json.Unmarshal(request.Content, &content); err != nil {
+	if err := json.Unmarshal(decryptedContent, &content); err != nil {
 		return fmt.Errorf("content could not be unmarshalled: %s", err)
 	}
 
@@ -57,7 +66,7 @@ func (r *requests) processRequest(request model.WorkerRequest, processors *reque
 	}
 
 	processorContent := processor.EmptyContent()
-	if err := json.Unmarshal(request.Content, &processorContent); err != nil {
+	if err := json.Unmarshal(decryptedContent, &processorContent); err != nil {
 		return fmt.Errorf("content could not be unmarshalled for requestProcessorId %s: %s", requestProcessorId, err)
 	}
 

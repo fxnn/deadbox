@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/model"
 	"github.com/fxnn/deadbox/request/echo"
 )
@@ -18,7 +19,7 @@ func TestRequest(t *testing.T) {
 	daemon, drop := runDropDaemon(t)
 	defer stopDaemon(daemon, t)
 
-	worker := runWorkerDaemon(t)
+	worker, workerKey := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
 
 	// HINT: drop and worker some time to settle
@@ -27,12 +28,12 @@ func TestRequest(t *testing.T) {
 	var (
 		err      error
 		requests []model.WorkerRequest
-		request  = model.WorkerRequest{
+		request  = *encrypted(workerKey, t, &model.WorkerRequest{
 			Id:          workerRequestId,
 			Timeout:     time.Now().Add(10 * time.Second),
 			ContentType: "application/json",
 			Content:     echoRequest("test content"),
-		}
+		})
 		response model.WorkerResponse
 	)
 
@@ -46,6 +47,8 @@ func TestRequest(t *testing.T) {
 	assertNumberOfRequests(requests, 1, t)
 	actualRequest := requests[0]
 	assertRequestId(actualRequest, workerRequestId, t)
+	assertRequestEncryptionType(actualRequest, "encryptionType:github.com/fxnn/deadbox:AESPlusRSA:1.0", t)
+	assertRequestContentContains(actualRequest, ":::", t)
 	// @todo #2 Verify Id, Timeout and Content
 
 	// HINT: Give worker time to send response
@@ -57,6 +60,25 @@ func TestRequest(t *testing.T) {
 	assertResponseContentType(response, "application/json", t)
 	assertResponseContent(response, "{\"echo\":\"test content\",\"requestProcessorId\":\"request-processor:github.com/fxnn/deadbox:echo:1.0\"}", t)
 
+}
+
+func encrypted(publicKeyBytes []byte, t *testing.T, request *model.WorkerRequest) *model.WorkerRequest {
+	t.Helper()
+
+	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
+	if err != nil {
+		t.Fatalf("failed to unmarshal public key: %s", err)
+	}
+
+	contentEncrypted, encryptionType, err := crypto.EncryptRequest(request.Content, publicKey)
+	if err != nil {
+		t.Fatalf("failed to encrypt content: %s", err)
+	}
+
+	request.Content = contentEncrypted
+	request.EncryptionType = encryptionType
+
+	return request
 }
 
 func echoRequest(echoString string) []byte {
@@ -79,7 +101,7 @@ func TestDuplicateRequestFails(t *testing.T) {
 	daemon, drop := runDropDaemon(t)
 	defer stopDaemon(daemon, t)
 
-	worker := runWorkerDaemon(t)
+	worker, _ := runWorkerDaemon(t)
 	defer stopDaemon(worker, t)
 
 	// HINT: drop and worker some time to settle

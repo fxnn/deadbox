@@ -20,11 +20,12 @@ type registrations struct {
 	registrationTimeoutDuration time.Duration
 }
 
-func (r *registrations) updateRegistration() error {
+func (r *registrations) updateRegistration(publicKey []byte) error {
 	w := &model.Worker{
-		Id:      r.id,
-		Name:    r.name,
-		Timeout: time.Now().Add(r.registrationTimeoutDuration),
+		Id:        r.id,
+		Name:      r.name,
+		Timeout:   time.Now().Add(r.registrationTimeoutDuration),
+		PublicKey: publicKey,
 	}
 	return r.drop.PutWorker(w)
 }
