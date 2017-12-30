@@ -134,7 +134,7 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 
 	privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(privateKeyBytes)
 	if err != nil {
-		t.Fatalf("couldn't unmarshal private key: %s", privateKey)
+		t.Fatalf("couldn't unmarshal private key: %s", err)
 	}
 	publicKeyBytes, err := crypto.GeneratePublicKeyBytes(privateKey)
 	if err != nil {
