@@ -137,7 +137,7 @@ However, it is subject to change, and some points might be of quite low priority
 * The Worker provides a public key to the Drop. The key pair could be
   generated on first startup.
 * When the User wants to send a request to a Worker, he identifies the
-  Worker using its key fingerprint. This must be configured in advance.
+  Worker using a unique identifier. This must be configured in advance.
 * User retrieves the Worker's public key from the Drop and encrypts
   requests to the Worker therewith.
 * User includes its own public key in its requests to the Worker, which
@@ -177,7 +177,7 @@ The file `drop.yml` contains the configuration for a drop.
 It must configure at least the following aspects.
 
 * Hostname and port to bind on.
-* A whitelist of allowed workers, identified by a fingerprint of their key.
+* A whitelist of allowed workers, identified by their unique identifiers.
 
 ### `auth.yml`
 
@@ -214,8 +214,7 @@ It will provide at least the following endpoints.
 
 As for a worker entry, at least the following information need to be contained.
 
-* The Workers unique identification, which should be the Workers key
-  fingerprint.
+* The Workers unique identification.
 * A timestamp, after which the Worker may be regarded as outdated and
   removed.
   The timestamp must be in the future.
