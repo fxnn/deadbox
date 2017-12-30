@@ -128,14 +128,20 @@ However, it is subject to change, and some points might be of quite low priority
 
 ### Security
 
-* Drop secures it's REST interface using TLS.
-  If the workers regards the TLS certificate as untrusted,
-  [Public Key Pinning](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning) might be an option.
-* Worker identifies itself using client certificates while connecting with TLS.
-* Drop compares worker's certificate against whitelist as means of authorization.
-* User encrypts requests using the worker's public key.
-  User retrieves that public key from the Drop, which received it during registration.
-* Worker encrypts responses using the user's public key, which is included in the request.
+* Drop secures its REST interface using TLS.
+  If the worker cannot establish a trust chain for the drops
+  certificate, [Public Key Pinning](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning)
+  might be an option.
+* When we want the Worker to authentificate against the drop, it could
+  use client certificates while connecting with TLS.
+* The Worker provides a public key to the Drop. The key pair could be
+  generated on first startup.
+* When the User wants to send a request to a Worker, he identifies the
+  Worker using its key fingerprint. This must be configured in advance.
+* User retrieves the Worker's public key from the Drop and encrypts
+  requests to the Worker therewith.
+* User includes its own public key in its requests to the Worker, which
+  in turn encrypts responses therewith.
 
 ### Command Line Interface
 
@@ -157,7 +163,9 @@ It must configure at least the following aspects.
   Should be unique amongst all workers on the same drop.
 * URL of one (or even multiple) drops.
 * A reference to a private (and possibly public) key file, used to decrypt 
-  received messages and to identify the worker's instance against a drop.
+  received messages and to identify and authentificate the Worker against
+  users and the drop.
+  The keys will be generated automatically if not existant.
 * Enabled receivers, with the appropriate configuration for each.
  * A file system receiver must be configured with the file system location, include/exclude patterns and allowed/disallowed operations.
  * An executing receiver must be configured with the command to execute when invoked.
@@ -188,16 +196,17 @@ It must contain at least the following information.
 The drop offers a REST interface to be consumed by users and workers.
 It will provide at least the following endpoints.
 
-* `GET /worker/` allows users to retrieve all workers available to him.
-* `POST /worker/` lets a worker register with the drop or update his 
+* `POST /worker/` lets a Worker register with the Drop or update his
   information.
   This endpoint is idempotent.
-* `GET /worker/{workerId}/request` lets a worker retrieve all pending requests 
+* `GET /worker/{workerId}` allows users to retrieve data about a Worker
+  by means of a pre-known `workerId`.
+* `GET /worker/{workerId}/request` lets a Worker retrieve all pending requests
   targeted to him.
-* `POST /worker/{workerId}/request` allows users to file a new 
-  request targeted to an worker.
+* `POST /worker/{workerId}/request` allows a User to file a new
+  request targeted to a Worker.
   This endpoint is idempotent.
-* `POST /worker/{workerId}/response/{requestId}` is called by a worker to
+* `POST /worker/{workerId}/response/{requestId}` is called by a Worker to
   transport the response to a request.
   This endpoint is idempotent.
 * `GET /worker/{workerId}/response/{requestId}` allows users to retrieve the
@@ -205,17 +214,25 @@ It will provide at least the following endpoints.
 
 As for a worker entry, at least the following information need to be contained.
 
-* The worker's unique identification.
-* A timestamp, after which the worker may be regarded as outdated and removed.
-* The request types supported by the worker, given as URN.
-* The worker's public key, used to encrypt the requests.
+* The Workers unique identification, which should be the Workers key
+  fingerprint.
+* A timestamp, after which the Worker may be regarded as outdated and
+  removed.
+  The timestamp must be in the future.
+  The Drop might apply a smaller timeout than requested.
+* The request types supported by the Worker, given as URN.
+* The Workers public key, used to encrypt the requests.
 
 As for a queue entry, which is a request, at least the following information
 need to be contained.
 
-* The request's unique identification.
-* A timestamp, after which the request may be regarded as outdated and removed.
+* The requests unique identification.
+* A timestamp, after which the request may be regarded as outdated and
+  removed.
+  The Drop might apply a smaller timeout than requested.
 * The request type, given as URN.
+  The request type should be contained in the list of supported request
+  types as provided by the Worker.
 * The request payload.
 * If we want to apply routing over multiple hops, we might also need a unique
   identifier of the originating drop, and possibly an ordered list of all
@@ -223,8 +240,10 @@ need to be contained.
 
 As for a response, at least the following information need to be contained.
 
-* The original request's unique identification.
-* A timestamp, after which the response may be regarded as outdated and removed.
+* The original requests unique identification.
+* A timestamp, after which the response may be regarded as outdated and
+  removed.
+  The Drop might apply a smaller timeout than requested.
 * The response payload.
 * If we want to apply routing over multiple hops, we might also need a unique
   identifier of the originating drop, and possibly an ordered list of all drops
