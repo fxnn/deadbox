@@ -14,7 +14,7 @@ func TestRegistration(t *testing.T) {
 	defer stopDaemon(worker, t)
 
 	// HINT: Give the worker some time to register
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(interactionSleepTime)
 
 	actualWorkers, err := drop.Workers()
 	if err != nil {

@@ -12,7 +12,9 @@ import (
 	"github.com/fxnn/deadbox/request/echo"
 )
 
-const workerRequestId = "workerRequestId"
+const (
+	workerRequestId = "workerRequestId"
+)
 
 func TestRequest(t *testing.T) {
 
@@ -23,7 +25,7 @@ func TestRequest(t *testing.T) {
 	defer stopDaemon(worker, t)
 
 	// HINT: drop and worker some time to settle
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(interactionSleepTime)
 
 	var (
 		err      error
@@ -105,7 +107,7 @@ func TestDuplicateRequestFails(t *testing.T) {
 	defer stopDaemon(worker, t)
 
 	// HINT: drop and worker some time to settle
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(interactionSleepTime)
 
 	var request = model.WorkerRequest{
 		Id:      workerRequestId,

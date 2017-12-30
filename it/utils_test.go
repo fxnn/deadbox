@@ -17,11 +17,14 @@ import (
 	"github.com/fxnn/deadbox/worker"
 )
 
-const workerDbFileName = "worker.boltdb"
-const workerName = "itWorker"
-const dropDbFileName = "drop.boltdb"
-const dropName = "itDrop"
-const port = "54123"
+const (
+	workerDbFileName     = "worker.boltdb"
+	workerName           = "itWorker"
+	dropDbFileName       = "drop.boltdb"
+	dropName             = "itDrop"
+	port                 = "54123"
+	interactionSleepTime = 500 * time.Millisecond
+)
 
 func assertWorkerTimeoutInFuture(actualWorker model.Worker, t *testing.T) {
 	t.Helper()
