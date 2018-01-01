@@ -134,12 +134,19 @@ However, it is subject to change, and some points might be of quite low priority
   might be an option.
 * When we want the Worker to authentificate against the drop, it could
   use client certificates while connecting with TLS.
-* The Worker provides a public key to the Drop. The key pair could be
-  generated on first startup.
+* The Worker provides a public key to the Drop.
+  The key pair could be generated on first startup.
 * When the User wants to send a request to a Worker, he identifies the
-  Worker using a unique identifier. This must be configured in advance.
+  Worker using a unique identifier.
+  * The identifier must be pre-known to the user, the Drop should not
+    provide a list of known workers, which makes it harder to find
+    vulnerable endpoints.
+  * The identifier _equals the public key fingerprint_.
+    This makes identiy spoofing harder and allows the user to trust
+    that the Worker he connects to is the one he actually expects.
 * User retrieves the Worker's public key from the Drop and encrypts
   requests to the Worker therewith.
+  The key is authenticated against the Worker's id (see above).
 * User includes its own public key in its requests to the Worker, which
   in turn encrypts responses therewith.
 
@@ -248,3 +255,35 @@ As for a response, at least the following information need to be contained.
 * If we want to apply routing over multiple hops, we might also need a unique
   identifier of the originating drop, and possibly an ordered list of all drops
   that are still to address.
+
+### Public Key Fingerprinting
+
+Creating a public key fingerprint, and therefore a Worker Id,
+incorporates the following steps.
+
+* Bring the public key into a binary representation,
+* Add other information which must be protected against tampering:
+  * Encryption type, i.e. RSA+AES
+* Add a modifier, which is an arbitrarily chosen number,
+* Calculate the hashsum of these data using `HashFunction`,
+* Verify that the first `CalculationCost` bits of the hashsum are zero,
+  * If not so, increase the modifier and recalculate the hash,
+* Shorten the hashsum to `FingerprintLength` bytes,
+* Represent the hashsum as uppercase hexadecimal, group them in pairs of
+  two and separate the pairs by colons `:`.
+
+This algorithm can be configured using the two parameters
+
+* `HashFunction`. The cryptographic hash function to be used, i.e.
+  SHA-256.
+* `CalculationCost`. At a value of `0`, it is very cheap to calculate
+  the fingerprint, but it's also quite cheap to calculate a hash
+  collision.
+* `FingerprintLength`. When equal to the number of bytes the
+  `HashFunction` produces, the fingerprint consists of the full hashsum,
+  providing maximum protection against hash collision search, but also
+  making the fingerprint difficult to use.
+
+The params `CalculationCost` and `FingerprintLength` should be chosen in
+a way that low `FingerprintLength` is compensated with a high
+`CalculationCost` and vice versa.
