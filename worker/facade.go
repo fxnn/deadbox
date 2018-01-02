@@ -38,7 +38,7 @@ type facade struct {
 	privateKeyBytes             []byte
 }
 
-func New(c config.Worker, id string, db *bolt.DB, privateKeyBytes []byte) Daemonized {
+func New(c *config.Worker, id string, db *bolt.DB, privateKeyBytes []byte) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
 	f := &facade{
 		db:                         db,
@@ -105,8 +105,8 @@ func (f *facade) main(stop <-chan struct{}) error {
 	}
 }
 
-func GeneratePrivateKeyBytes() ([]byte, error) {
-	if key, err := crypto.GeneratePrivateKey(); err != nil {
+func GeneratePrivateKeyBytes(rsaKeySize int) ([]byte, error) {
+	if key, err := crypto.GeneratePrivateKey(rsaKeySize); err != nil {
 		return nil, fmt.Errorf("could not generate private key: %s", err)
 	} else {
 		return crypto.MarshalPrivateKeyToPEMBytes(key), nil

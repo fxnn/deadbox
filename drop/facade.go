@@ -29,7 +29,7 @@ type facade struct {
 	*responses
 }
 
-func New(c config.Drop, db *bolt.DB) Daemonized {
+func New(c *config.Drop, db *bolt.DB) Daemonized {
 	f := &facade{
 		name:          c.Name,
 		listenAddress: c.ListenAddress,

@@ -11,6 +11,7 @@ func Dummy() *Application {
 		RegistrationTimeoutInSeconds:        DefaultRegistrationTimeoutInSeconds,
 		PublicKeyFingerprintChallengeLevel:  DefaultPublicKeyFingerprintChallengeLevel,
 		PublicKeyFingerprintLength:          DefaultPublicKeyFingerprintLength,
+		PrivateKeySize:                      DefaultPrivateKeySize,
 	}
 	d := Drop{
 		Name:                      "Default Drop",

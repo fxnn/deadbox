@@ -48,11 +48,11 @@ func startDaemons(cfg *config.Application) []daemon.Daemon {
 	var daemons = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
 
 	for _, dp := range cfg.Drops {
-		daemons = append(daemons, serveDrop(dp, cfg))
+		daemons = append(daemons, serveDrop(&dp, cfg))
 	}
 
 	for _, wk := range cfg.Workers {
-		daemons = append(daemons, runWorker(wk, cfg))
+		daemons = append(daemons, runWorker(&wk, cfg))
 	}
 
 	return daemons
@@ -63,8 +63,8 @@ func waitForShutdownRequest() {
 	log.Println(<-ch)
 }
 
-func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
-	var k = readOrCreatePrivateKeyFile(acfg, wcfg.Name)
+func runWorker(wcfg *config.Worker, acfg *config.Application) daemon.Daemon {
+	var k = readOrCreatePrivateKeyFile(acfg, wcfg)
 	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
 
 	var b = openDb(acfg, wcfg.Name)
@@ -84,15 +84,15 @@ func generateWorkerId(privateKeyBytes []byte, fingerprintLength uint, challengeL
 	}
 }
 
-func readOrCreatePrivateKeyFile(cfg *config.Application, name string) []byte {
-	fileName := privateKeyFileName(cfg, name)
+func readOrCreatePrivateKeyFile(acfg *config.Application, wcfg *config.Worker) []byte {
+	fileName := privateKeyFileName(acfg.PrivateKeyPath, wcfg.Name)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			panic(fmt.Errorf("couldn't read file %s: %s", fileName, err))
 		}
 
-		bytes, err = worker.GeneratePrivateKeyBytes()
+		bytes, err = worker.GeneratePrivateKeyBytes(wcfg.PrivateKeySize)
 		if err != nil {
 			panic(fmt.Errorf("couldn't generate private key: %s", err))
 		}
@@ -106,7 +106,7 @@ func readOrCreatePrivateKeyFile(cfg *config.Application, name string) []byte {
 	return bytes
 }
 
-func serveDrop(dcfg config.Drop, acfg *config.Application) daemon.Daemon {
+func serveDrop(dcfg *config.Drop, acfg *config.Application) daemon.Daemon {
 	var b = openDb(acfg, dcfg.Name)
 	var d daemon.Daemon = drop.New(dcfg, b)
 	d.OnStop(b.Close)
@@ -135,6 +135,6 @@ func dbFileName(cfg *config.Application, name string) string {
 	return filepath.Join(cfg.DbPath, name+"."+dbFileExtension)
 }
 
-func privateKeyFileName(cfg *config.Application, name string) string {
-	return filepath.Join(cfg.PrivateKeyPath, name+"."+privateKeyFileExtension)
+func privateKeyFileName(path string, workerName string) string {
+	return filepath.Join(path, workerName+"."+privateKeyFileExtension)
 }

@@ -11,7 +11,6 @@ import (
 
 const (
 	pemBlockTypePrivateKey = "RSA PRIVATE KEY"
-	rsaKeySize             = 2048
 )
 
 func GeneratePublicKeyBytes(privateKey *rsa.PrivateKey) ([]byte, error) {
@@ -37,7 +36,7 @@ func generatePublicKey(privateKey *rsa.PrivateKey) *rsa.PublicKey {
 	return &privateKey.PublicKey
 }
 
-func GeneratePrivateKey() (*rsa.PrivateKey, error) {
+func GeneratePrivateKey(rsaKeySize int) (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, rsaKeySize)
 }
 

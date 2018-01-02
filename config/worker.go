@@ -4,10 +4,13 @@ import (
 	"net/url"
 )
 
-const DefaultUpdateRegistrationIntervalInSeconds = 10
-const DefaultRegistrationTimeoutInSeconds = 10 * DefaultUpdateRegistrationIntervalInSeconds
-const DefaultPublicKeyFingerprintLength = 8
-const DefaultPublicKeyFingerprintChallengeLevel = 21
+const (
+	DefaultUpdateRegistrationIntervalInSeconds = 10
+	DefaultRegistrationTimeoutInSeconds        = 10 * DefaultUpdateRegistrationIntervalInSeconds
+	DefaultPublicKeyFingerprintLength          = 8
+	DefaultPublicKeyFingerprintChallengeLevel  = 21
+	DefaultPrivateKeySize                      = 4096
+)
 
 // Worker configuration, created once per configured worker.
 type Worker struct {
@@ -32,4 +35,7 @@ type Worker struct {
 	// level, the more secure the fingerprint is against pre-image attacks, but the longer it takes to generate and
 	// validate the fingerprint.
 	PublicKeyFingerprintChallengeLevel uint
+
+	// PrivateKeySize is the size of the private RSA key in bytes, mostly 2048 oder 4096.
+	PrivateKeySize int
 }
