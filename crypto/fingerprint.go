@@ -29,9 +29,14 @@ func FingerprintPublicKey(
 		return "", fmt.Errorf("marshalling public key failed: %s", err)
 	}
 
-	hashSum, _, err := findChallengeSolution(keyBytes, encryptionType, hashFunction, challengeLevel)
+	hashInputPrefix, err := generateHashInput(challengeLevel, keyBytes, encryptionType)
 	if err != nil {
-		return "", fmt.Errorf("generating hashsum failed: %s", err)
+		return "", fmt.Errorf("generating hash input failed: %s", err)
+	}
+
+	hashSum, _, err := findChallengeSolution(hashInputPrefix, hashFunction, challengeLevel)
+	if err != nil {
+		return "", fmt.Errorf("generating hash sum failed: %s", err)
 	}
 
 	numberOfOmittedBytes := (challengeLevel + 7) / 8
@@ -44,13 +49,18 @@ func FingerprintPublicKey(
 }
 
 func findChallengeSolution(
-	keyBytes []byte,
-	encryptionType string,
+	hashInputPrefix []byte,
 	hashFunction crypto.Hash,
 	challengeLevel uint,
 ) (hashSum []byte, challengeSolution int, err error) {
-	for challengeSolution = 0; !isPassChallenge(hashSum, challengeLevel); challengeSolution++ {
-		hashSum, err = generateHashSum(challengeLevel, challengeSolution, keyBytes, encryptionType, hashFunction)
+	var hashInputSuffix = make([]byte, 8)               // HINT: will be filled each round
+	var zeroHashSum = make([]byte, hashFunction.Size()) // HINT: used for comparison later
+
+	for challengeSolution = 0; !isPassChallenge(zeroHashSum, hashSum, challengeLevel); challengeSolution++ {
+		binary.BigEndian.PutUint64(hashInputSuffix, uint64(challengeSolution))
+		hashInput := append(hashInputPrefix, hashInputSuffix...)
+
+		hashSum, err = generateHashSum(hashInput, hashFunction)
 		if err != nil {
 			return
 		}
@@ -59,7 +69,7 @@ func findChallengeSolution(
 	return
 }
 
-func isPassChallenge(hashInput []byte, challengeLevel uint) bool {
+func isPassChallenge(zeroHashSum []byte, hashInput []byte, challengeLevel uint) bool {
 	if hashInput == nil {
 		return false
 	}
@@ -68,10 +78,8 @@ func isPassChallenge(hashInput []byte, challengeLevel uint) bool {
 	}
 
 	idxOfFirstNonZeroByte := challengeLevel / 8 // note, that '/' is always floor'd
-	for _, b := range hashInput[:idxOfFirstNonZeroByte] {
-		if b != 0 {
-			return false
-		}
+	if !bytes.Equal(zeroHashSum[:idxOfFirstNonZeroByte], hashInput[:idxOfFirstNonZeroByte]) {
+		return false
 	}
 
 	if uint(len(hashInput)) > idxOfFirstNonZeroByte {
@@ -85,19 +93,11 @@ func isPassChallenge(hashInput []byte, challengeLevel uint) bool {
 }
 
 func generateHashSum(
-	challengeLevel uint,
-	challengeSolution int,
-	keyBytes []byte,
-	encryptionType string,
+	hashInput []byte,
 	hashFunction crypto.Hash,
 ) ([]byte, error) {
-	hashInput, err := generateHashInput(challengeLevel, challengeSolution, keyBytes, encryptionType)
-	if err != nil {
-		return nil, fmt.Errorf("generating hash input failed: %s", err)
-	}
-
 	hash := hashFunction.New()
-	_, err = hash.Write(hashInput)
+	_, err := hash.Write(hashInput)
 	if err != nil {
 		hashType := reflect.TypeOf(hash)
 		return nil, fmt.Errorf("%s: %s", hashType, err)
@@ -108,7 +108,6 @@ func generateHashSum(
 
 func generateHashInput(
 	challengeLevel uint,
-	challengeSolution int,
 	keyBytes []byte,
 	encryptionType string,
 ) ([]byte, error) {
@@ -125,12 +124,9 @@ func generateHashInput(
 	}
 	hashInputBuffer.WriteString(hashSeparator)
 
-	if err := binary.Write(&hashInputBuffer, binary.BigEndian, int64(challengeSolution)); err != nil {
-		return nil, fmt.Errorf("writing challengeSolution failed: %s", err)
-	}
-
 	// @todo #27 add validity time
 
+	// NOTE: challengeSolution is appended here in each round
 	return hashInputBuffer.Bytes(), nil
 }
 

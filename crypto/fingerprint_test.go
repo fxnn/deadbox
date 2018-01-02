@@ -24,32 +24,32 @@ func TestFingerprintPublicKey(t *testing.T) {
 
 func TestIsPassChallenge(t *testing.T) {
 
-	assertTrue(isPassChallenge([]byte{0}, 1), t)
-	assertTrue(isPassChallenge([]byte{0}, 0), t)
+	assertPassChallenge([]byte{0}, 1, t)
+	assertPassChallenge([]byte{0}, 0, t)
 
-	assertFalse(isPassChallenge([]byte{1}, 8), t)
-	assertTrue(isPassChallenge([]byte{1}, 7), t)
-	assertTrue(isPassChallenge([]byte{1}, 1), t)
-	assertTrue(isPassChallenge([]byte{1}, 0), t)
+	assertDoesntPassChallenge([]byte{1}, 8, t)
+	assertPassChallenge([]byte{1}, 7, t)
+	assertPassChallenge([]byte{1}, 1, t)
+	assertPassChallenge([]byte{1}, 0, t)
 
-	assertFalse(isPassChallenge([]byte{255}, 8), t)
-	assertFalse(isPassChallenge([]byte{255}, 1), t)
-	assertTrue(isPassChallenge([]byte{255}, 0), t)
+	assertDoesntPassChallenge([]byte{255}, 8, t)
+	assertDoesntPassChallenge([]byte{255}, 1, t)
+	assertPassChallenge([]byte{255}, 0, t)
 
-	assertTrue(isPassChallenge([]byte{1, 0}, 7), t)
-	assertFalse(isPassChallenge([]byte{1, 0}, 8), t)
-	assertFalse(isPassChallenge([]byte{1, 0}, 9), t)
-	assertFalse(isPassChallenge([]byte{1, 1}, 8), t)
+	assertPassChallenge([]byte{1, 0}, 7, t)
+	assertDoesntPassChallenge([]byte{1, 0}, 8, t)
+	assertDoesntPassChallenge([]byte{1, 0}, 9, t)
+	assertDoesntPassChallenge([]byte{1, 1}, 8, t)
 
-	assertTrue(isPassChallenge([]byte{0, 1}, 8), t)
-	assertTrue(isPassChallenge([]byte{0, 1}, 15), t)
-	assertFalse(isPassChallenge([]byte{0, 1}, 16), t)
+	assertPassChallenge([]byte{0, 1}, 8, t)
+	assertPassChallenge([]byte{0, 1}, 15, t)
+	assertDoesntPassChallenge([]byte{0, 1}, 16, t)
 
-	assertTrue(isPassChallenge([]byte{0, 255}, 8), t)
-	assertFalse(isPassChallenge([]byte{0, 255}, 9), t)
+	assertPassChallenge([]byte{0, 255}, 8, t)
+	assertDoesntPassChallenge([]byte{0, 255}, 9, t)
 
-	assertTrue(isPassChallenge([]byte{0, 0, 255}, 16), t)
-	assertFalse(isPassChallenge([]byte{0, 0, 255}, 17), t)
+	assertPassChallenge([]byte{0, 0, 255}, 16, t)
+	assertDoesntPassChallenge([]byte{0, 0, 255}, 17, t)
 
 }
 
@@ -73,16 +73,18 @@ func assertFingerprint(
 	}
 }
 
-func assertTrue(actual bool, t *testing.T) {
+func assertPassChallenge(hashInput []byte, challengeLevel uint, t *testing.T) {
 	t.Helper()
-	if actual != true {
+	zeroHashSum := make([]byte, len(hashInput))
+	if !isPassChallenge(zeroHashSum, hashInput, challengeLevel) {
 		t.Fatalf("expected true, but was false")
 	}
 }
 
-func assertFalse(actual bool, t *testing.T) {
+func assertDoesntPassChallenge(hashInput []byte, challengeLevel uint, t *testing.T) {
 	t.Helper()
-	if actual != false {
+	zeroHashSum := make([]byte, len(hashInput))
+	if isPassChallenge(zeroHashSum, hashInput, challengeLevel) {
 		t.Fatalf("expected false, but was true")
 	}
 }
