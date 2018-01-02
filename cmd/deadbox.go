@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
 	"github.com/fxnn/deadbox/worker"
@@ -20,6 +22,7 @@ import (
 const (
 	filePermOnlyUserCanReadOrWrite = 0600
 	dbFileExtension                = "boltdb"
+	privateKeyFileExtension        = "pem"
 )
 
 func main() {
@@ -46,11 +49,11 @@ func startDaemons(cfg *config.Application) []daemon.Daemon {
 	var daemons = make([]daemon.Daemon, 0, len(cfg.Drops)+len(cfg.Workers))
 
 	for _, dp := range cfg.Drops {
-		daemons = append(daemons, serveDrop(dp, cfg))
+		daemons = append(daemons, serveDrop(&dp, cfg))
 	}
 
 	for _, wk := range cfg.Workers {
-		daemons = append(daemons, runWorker(wk, cfg))
+		daemons = append(daemons, runWorker(&wk, cfg))
 	}
 
 	return daemons
@@ -61,24 +64,36 @@ func waitForShutdownRequest() {
 	log.Println(<-ch)
 }
 
-func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
+func runWorker(wcfg *config.Worker, acfg *config.Application) daemon.Daemon {
+	var k = readOrCreatePrivateKey(acfg, wcfg)
+	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
+
 	var b = openDb(acfg, wcfg.Name)
-	var k = readOrCreatePrivateKeyFile(wcfg.PrivateKeyFile)
-	var d daemon.Daemon = worker.New(wcfg, b, k)
+	var d daemon.Daemon = worker.New(wcfg, id, b, k)
 	d.OnStop(b.Close)
 	d.Start()
 
 	return d
 }
 
-func readOrCreatePrivateKeyFile(fileName string) []byte {
+func generateWorkerId(privateKey *rsa.PrivateKey, fingerprintLength uint, challengeLevel uint) string {
+	if fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, challengeLevel, fingerprintLength); err != nil {
+		panic(err)
+	} else {
+		return fingerprint
+	}
+}
+
+func readOrCreatePrivateKey(acfg *config.Application, wcfg *config.Worker) *rsa.PrivateKey {
+	fileName := privateKeyFileName(acfg.PrivateKeyPath, wcfg.Name)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			panic(fmt.Errorf("couldn't read file %s: %s", fileName, err))
 		}
 
-		bytes, err = worker.GeneratePrivateKeyBytes()
+		log.Printf("worker '%s' has no private key, generating one", wcfg.Name)
+		bytes, err = worker.GeneratePrivateKeyBytes(wcfg.PrivateKeySize)
 		if err != nil {
 			panic(fmt.Errorf("couldn't generate private key: %s", err))
 		}
@@ -89,10 +104,19 @@ func readOrCreatePrivateKeyFile(fileName string) []byte {
 		}
 	}
 
-	return bytes
+	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(bytes); err != nil {
+		panic(fmt.Errorf("couldn't read private key from file %s: %s", fileName, err))
+	} else {
+		if privateKey.N.BitLen() != wcfg.PrivateKeySize {
+			log.Printf("worker '%s' has configured key size '%d', but existing key has size '%d'",
+				wcfg.Name, wcfg.PrivateKeySize, privateKey.N.BitLen())
+		}
+
+		return privateKey
+	}
 }
 
-func serveDrop(dcfg config.Drop, acfg *config.Application) daemon.Daemon {
+func serveDrop(dcfg *config.Drop, acfg *config.Application) daemon.Daemon {
 	var b = openDb(acfg, dcfg.Name)
 	var d daemon.Daemon = drop.New(dcfg, b)
 	d.OnStop(b.Close)
@@ -119,4 +143,8 @@ func openDb(cfg *config.Application, name string) *bolt.DB {
 
 func dbFileName(cfg *config.Application, name string) string {
 	return filepath.Join(cfg.DbPath, name+"."+dbFileExtension)
+}
+
+func privateKeyFileName(path string, workerName string) string {
+	return filepath.Join(path, workerName+"."+privateKeyFileExtension)
 }

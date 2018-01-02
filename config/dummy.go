@@ -9,6 +9,9 @@ func Dummy() *Application {
 		DropUrl: dropUrl,
 		UpdateRegistrationIntervalInSeconds: DefaultUpdateRegistrationIntervalInSeconds,
 		RegistrationTimeoutInSeconds:        DefaultRegistrationTimeoutInSeconds,
+		PublicKeyFingerprintChallengeLevel:  DefaultPublicKeyFingerprintChallengeLevel,
+		PublicKeyFingerprintLength:          DefaultPublicKeyFingerprintLength,
+		PrivateKeySize:                      DefaultPrivateKeySize,
 	}
 	d := Drop{
 		Name:                      "Default Drop",
@@ -16,9 +19,10 @@ func Dummy() *Application {
 		MaxWorkerTimeoutInSeconds: DefaultMaxWorkerTimeoutInSeconds,
 	}
 	app := &Application{
-		DbPath:  "./",
-		Workers: []Worker{w},
-		Drops:   []Drop{d},
+		DbPath:         "./",
+		PrivateKeyPath: "./",
+		Workers:        []Worker{w},
+		Drops:          []Drop{d},
 	}
 	return app
 }

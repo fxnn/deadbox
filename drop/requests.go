@@ -19,13 +19,18 @@ func (w *requests) WorkerRequests(id model.WorkerId) ([]model.WorkerRequest, err
 	var err error
 
 	err = w.db.View(func(tx *bolt.Tx) error {
+		// NOTE: this is a read-only TX, bucket expected to be created on worker registration
+		if err := assertWorkerExists(tx, id); err != nil {
+			return err
+		}
+
 		if wb, err := findOrCreateRequestBucket(tx, id); err != nil {
 			return err
 		} else {
 			c := wb.Cursor()
 			for k, v := c.First(); k != nil; k, v = c.Next() {
 				var request model.WorkerRequest
-				if err := json.Unmarshal(v, &request); err != nil {
+				if err = json.Unmarshal(v, &request); err != nil {
 					return fmt.Errorf("request could not be unmarshalled from DB: %s", err)
 				}
 				result = append(result, request)

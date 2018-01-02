@@ -15,7 +15,7 @@ func (r *requestProcessors) requestProcessorForId(requestProcessorId string) (re
 	return p, ok
 }
 
-func createRequestProcessorsByIdMap(c config.Worker) (result map[string]request.Processor) {
+func createRequestProcessorsByIdMap(c *config.Worker) (result map[string]request.Processor) {
 	result = make(map[string]request.Processor)
 	addRequestProcessor(result, echo.New())
 	return

@@ -86,7 +86,7 @@ func assertResponseContent(actualResponse model.WorkerResponse, expectedContent 
 func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 	t.Helper()
 
-	cfg := config.Drop{
+	cfg := &config.Drop{
 		Name:                       dropName,
 		ListenAddress:              ":" + port,
 		MaxRequestTimeoutInSeconds: config.DefaultMaxRequestTimeoutInSeconds,
@@ -117,7 +117,7 @@ func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 	t.Helper()
 
-	cfg := config.Worker{
+	cfg := &config.Worker{
 		Name:    workerName,
 		DropUrl: parseUrlOrPanic("http://localhost:" + port),
 		RegistrationTimeoutInSeconds:        config.DefaultRegistrationTimeoutInSeconds,
@@ -127,7 +127,7 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 	if err != nil {
 		t.Fatalf("could not open Worker's BoltDB: %s", err)
 	}
-	privateKeyBytes, err := worker.GeneratePrivateKeyBytes()
+	privateKeyBytes, err := worker.GeneratePrivateKeyBytes(2048)
 	if err != nil {
 		t.Fatalf("couldn't generate private key: %s", err)
 	}
@@ -140,8 +140,12 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 	if err != nil {
 		t.Fatalf("couldn't generate public key bytes: %s", err)
 	}
+	fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, 10, 4)
+	if err != nil {
+		t.Fatalf("couldn't fingerprint public key: %s", err)
+	}
 
-	workerDaemon := worker.New(cfg, db, privateKeyBytes)
+	workerDaemon := worker.New(cfg, fingerprint, db, privateKey)
 	workerDaemon.OnStop(func() error {
 		if err := db.Close(); err != nil {
 			return err
