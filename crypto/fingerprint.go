@@ -29,7 +29,7 @@ func FingerprintPublicKey(
 		return "", fmt.Errorf("marshalling public key failed: %s", err)
 	}
 
-	hashInputPrefix, err := generateHashInput(challengeLevel, keyBytes, encryptionType)
+	hashInputPrefix, err := generateHashInputPrefix(challengeLevel, keyBytes, encryptionType)
 	if err != nil {
 		return "", fmt.Errorf("generating hash input failed: %s", err)
 	}
@@ -106,7 +106,7 @@ func generateHashSum(
 	return hash.Sum([]byte{}), nil
 }
 
-func generateHashInput(
+func generateHashInputPrefix(
 	challengeLevel uint,
 	keyBytes []byte,
 	encryptionType string,
@@ -132,7 +132,7 @@ func generateHashInput(
 
 func generateGroupedFingerprint(hashSumString string, numberOfGroups int, groupSeparator string) string {
 	var groupedFingerprintBuffer bytes.Buffer
-	for groupIdx := 0; groupIdx < numberOfGroups; groupIdx++ {
+	for groupIdx := 0; groupIdx < numberOfGroups && 2*groupIdx+2 <= len(hashSumString); groupIdx++ {
 		groupedFingerprintBuffer.WriteString(hashSumString[2*groupIdx : 2*groupIdx+2])
 
 		if groupIdx < numberOfGroups-1 {

@@ -53,6 +53,22 @@ func TestIsPassChallenge(t *testing.T) {
 
 }
 
+func TestGenerateGroupedFingerprint(t *testing.T) {
+
+	assertGroupedFingerprint("", "", 0, t)
+	assertGroupedFingerprint("", "", 1, t)
+
+	assertGroupedFingerprint("", "ab", 0, t)
+	assertGroupedFingerprint("ab", "ab", 1, t)
+	assertGroupedFingerprint("ab:", "ab", 2, t)
+
+	assertGroupedFingerprint("", "abcd", 0, t)
+	assertGroupedFingerprint("ab", "abcd", 1, t)
+	assertGroupedFingerprint("ab:cd", "abcd", 2, t)
+	assertGroupedFingerprint("ab:cd:", "abcd", 3, t)
+
+}
+
 func assertFingerprint(
 	t *testing.T,
 	expected string,
@@ -86,5 +102,13 @@ func assertDoesntPassChallenge(hashInput []byte, challengeLevel uint, t *testing
 	zeroHashSum := make([]byte, len(hashInput))
 	if isPassChallenge(zeroHashSum, hashInput, challengeLevel) {
 		t.Fatalf("expected false, but was true")
+	}
+}
+
+func assertGroupedFingerprint(expected string, input string, numberOfGroups int, t *testing.T) {
+	t.Helper()
+	actual := generateGroupedFingerprint(input, numberOfGroups, ":")
+	if actual != expected {
+		t.Fatalf("expected '%s', but was '%s'", expected, actual)
 	}
 }
