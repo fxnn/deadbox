@@ -73,7 +73,7 @@ func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
 
 	return d
 }
-func generateWorkerId(privateKeyBytes []byte, fingerprintLength int, challengeLevel uint) string {
+func generateWorkerId(privateKeyBytes []byte, fingerprintLength uint, challengeLevel uint) string {
 	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(privateKeyBytes); err != nil {
 		panic(fmt.Errorf("couldn't read private key file: %s", err))
 	} else if fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, challengeLevel, fingerprintLength); err != nil {

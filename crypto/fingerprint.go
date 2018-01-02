@@ -21,7 +21,7 @@ var fingerprintEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 func FingerprintPublicKey(
 	key *rsa.PublicKey,
 	challengeLevel uint,
-	fingerprintLengthInGroups int,
+	fingerprintLengthInGroups uint,
 ) (string, error) {
 	keyBytes, err := marshalPublicKey(key)
 	if err != nil {
@@ -125,9 +125,9 @@ func generateHashInputPrefix(
 	return hashInputBuffer.Bytes(), nil
 }
 
-func generateGroupedFingerprint(hashSumString string, numberOfGroups int, groupSeparator string) string {
+func generateGroupedFingerprint(hashSumString string, numberOfGroups uint, groupSeparator string) string {
 	var groupedFingerprintBuffer bytes.Buffer
-	for groupIdx := 0; groupIdx < numberOfGroups && 2*groupIdx+2 <= len(hashSumString); groupIdx++ {
+	for groupIdx := uint(0); groupIdx < numberOfGroups && 2*groupIdx+2 <= uint(len(hashSumString)); groupIdx++ {
 		groupedFingerprintBuffer.WriteString(hashSumString[2*groupIdx : 2*groupIdx+2])
 
 		if groupIdx < numberOfGroups-1 {

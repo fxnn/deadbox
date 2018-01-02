@@ -72,7 +72,7 @@ func assertFingerprint(
 	t *testing.T,
 	expected string,
 	challengeLevel uint,
-	fingerprintLengthInGroups int,
+	fingerprintLengthInGroups uint,
 	key *rsa.PublicKey,
 ) {
 	t.Helper()
@@ -103,7 +103,7 @@ func assertDoesntPassChallenge(hashInput []byte, challengeLevel uint, t *testing
 	}
 }
 
-func assertGroupedFingerprint(expected string, input string, numberOfGroups int, t *testing.T) {
+func assertGroupedFingerprint(expected string, input string, numberOfGroups uint, t *testing.T) {
 	t.Helper()
 	actual := generateGroupedFingerprint(input, numberOfGroups, ":")
 	if actual != expected {

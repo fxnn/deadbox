@@ -28,7 +28,7 @@ type Worker struct {
 
 	// PublicKeyFingerprintLength influences the length of the public keys fingerprint. The greater the length, the
 	// more reliable the fingerprint is, but the harder it is to remember for human users.
-	PublicKeyFingerprintLength int
+	PublicKeyFingerprintLength uint
 
 	// PublicKeyFingerprintChallengeLevel influences the time it takes to generate the fingerprint. The greater the
 	// level, the more secure the fingerprint is against pre-image attacks, but the longer it takes to generate and
