@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestSomething(t *testing.T) {
+func TestFingerprintPublicKey(t *testing.T) {
 
 	key := &rsa.PublicKey{
 		N: big.NewInt(42),
@@ -18,6 +18,23 @@ func TestSomething(t *testing.T) {
 	assertFingerprint(t, "UO:4H:KV:XF:SL:GP:OH:AN", 1, 8, key, encryptionType)
 	assertFingerprint(t, "VY:NC:DT:LR:I5:OJ:5B:SC", 2, 8, key, encryptionType)
 	assertFingerprint(t, "6S:GL:5D:TN:A4:CJ:GZ:P6", 3, 8, key, encryptionType)
+
+}
+
+func TestIsPassChallenge(t *testing.T) {
+
+	assertTrue(isPassChallenge([]byte{0}, 1), t)
+	assertTrue(isPassChallenge([]byte{0}, 0), t)
+
+	assertFalse(isPassChallenge([]byte{1}, 1), t)
+	assertTrue(isPassChallenge([]byte{1}, 0), t)
+
+	assertFalse(isPassChallenge([]byte{1, 0}, 2), t)
+	assertFalse(isPassChallenge([]byte{1, 0}, 1), t)
+	assertFalse(isPassChallenge([]byte{1, 1}, 1), t)
+	assertTrue(isPassChallenge([]byte{1, 0}, 0), t)
+	assertTrue(isPassChallenge([]byte{0, 1}, 1), t)
+	assertTrue(isPassChallenge([]byte{0, 0}, 2), t)
 
 }
 
@@ -39,23 +56,6 @@ func assertFingerprint(
 	if fingerprint != expected {
 		t.Fatalf("unexpected fingerprint: %s", fingerprint)
 	}
-}
-
-func TestIsPassChallenge(t *testing.T) {
-
-	assertTrue(isPassChallenge([]byte{0}, 1), t)
-	assertTrue(isPassChallenge([]byte{0}, 0), t)
-
-	assertFalse(isPassChallenge([]byte{1}, 1), t)
-	assertTrue(isPassChallenge([]byte{1}, 0), t)
-
-	assertFalse(isPassChallenge([]byte{1, 0}, 2), t)
-	assertFalse(isPassChallenge([]byte{1, 0}, 1), t)
-	assertFalse(isPassChallenge([]byte{1, 1}, 1), t)
-	assertTrue(isPassChallenge([]byte{1, 0}, 0), t)
-	assertTrue(isPassChallenge([]byte{0, 1}, 1), t)
-	assertTrue(isPassChallenge([]byte{0, 0}, 2), t)
-
 }
 
 func assertTrue(actual bool, t *testing.T) {

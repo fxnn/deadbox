@@ -16,33 +16,46 @@ const (
 	fingerprintGroupSeparator = ":"
 )
 
+var fingerprintEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
+
 func FingerprintPublicKey(
 	key *rsa.PublicKey,
 	encryptionType string,
 	challengeLevel int,
 	fingerprintLengthInGroups int,
 ) (string, error) {
-	encoding := base32.StdEncoding.WithPadding(base32.NoPadding)
-
 	keyBytes, err := marshalPublicKey(key)
 	if err != nil {
 		return "", fmt.Errorf("marshalling public key failed: %s", err)
 	}
 
-	var hashSum []byte
-	for modifier := 0; !isPassChallenge(hashSum, challengeLevel); modifier++ {
-		hashSum, err = generateHashSum(modifier, keyBytes, encryptionType, hashFunction)
-		if err != nil {
-			return "", fmt.Errorf("calculating hash sum failed: %s", err)
-		}
+	hashSum, _, err := findChallengeSolution(keyBytes, encryptionType, hashFunction, challengeLevel)
+	if err != nil {
+		return "", fmt.Errorf("generating hashsum failed: %s", err)
 	}
 
-	hashSumString := encoding.EncodeToString(hashSum[challengeLevel:])
+	hashSumString := fingerprintEncoding.EncodeToString(hashSum[challengeLevel:])
 	fingerprint := generateGroupedFingerprint(hashSumString,
 		fingerprintLengthInGroups,
 		fingerprintGroupSeparator)
 
 	return fingerprint, nil
+}
+
+func findChallengeSolution(
+	keyBytes []byte,
+	encryptionType string,
+	hashFunction crypto.Hash,
+	challengeLevel int,
+) (hashSum []byte, challengeSolution int, err error) {
+	for challengeSolution = 0; !isPassChallenge(hashSum, challengeLevel); challengeSolution++ {
+		hashSum, err = generateHashSum(challengeSolution, keyBytes, encryptionType, hashFunction)
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 func isPassChallenge(hashInput []byte, challengeLevel int) bool {
@@ -59,12 +72,13 @@ func isPassChallenge(hashInput []byte, challengeLevel int) bool {
 	return true
 }
 
-func generateHashSum(modifier int,
+func generateHashSum(
+	challengeSolution int,
 	keyBytes []byte,
 	encryptionType string,
 	hashFunction crypto.Hash,
 ) ([]byte, error) {
-	hashInput, err := generateHashInput(modifier, keyBytes, encryptionType)
+	hashInput, err := generateHashInput(challengeSolution, keyBytes, encryptionType)
 	if err != nil {
 		return nil, fmt.Errorf("generating hash input failed: %s", err)
 	}

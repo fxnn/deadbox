@@ -266,9 +266,9 @@ incorporates the following steps.
   * Encryption type, i.e. RSA+AES
 * Add a modifier, which is an arbitrarily chosen number,
 * Calculate the hashsum of these data using `HashFunction`,
-* Verify that the last `ChallengeLevel` bytes of the hashsum are zero,
+* Verify that the first `ChallengeLevel` bytes of the hashsum are zero,
   * If not so, increase the modifier and recalculate the hash,
-* Encode the hashsum in Base32,
+* Encode the hashsum without the first `ChallengeLevel` bytes in Base32,
 * Group the encoded hashsum in pairs of two characters,
   shorten it to the first `FingerprintLength` groups and
   separate the pairs by colons `:`.
