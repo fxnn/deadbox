@@ -21,6 +21,7 @@ import (
 const (
 	filePermOnlyUserCanReadOrWrite = 0600
 	dbFileExtension                = "boltdb"
+	privateKeyFileExtension        = "pem"
 )
 
 func main() {
@@ -63,10 +64,10 @@ func waitForShutdownRequest() {
 }
 
 func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
-	var k = readOrCreatePrivateKeyFile(wcfg.PrivateKeyFile)
+	var k = readOrCreatePrivateKeyFile(acfg, wcfg.Name)
 	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
 
-	var b = openDb(acfg, id)
+	var b = openDb(acfg, wcfg.Name)
 	var d daemon.Daemon = worker.New(wcfg, id, b, k)
 	d.OnStop(b.Close)
 	d.Start()
@@ -83,7 +84,8 @@ func generateWorkerId(privateKeyBytes []byte, fingerprintLength uint, challengeL
 	}
 }
 
-func readOrCreatePrivateKeyFile(fileName string) []byte {
+func readOrCreatePrivateKeyFile(cfg *config.Application, name string) []byte {
+	fileName := privateKeyFileName(cfg, name)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -131,4 +133,8 @@ func openDb(cfg *config.Application, name string) *bolt.DB {
 
 func dbFileName(cfg *config.Application, name string) string {
 	return filepath.Join(cfg.DbPath, name+"."+dbFileExtension)
+}
+
+func privateKeyFileName(cfg *config.Application, name string) string {
+	return filepath.Join(cfg.PrivateKeyPath, name+"."+privateKeyFileExtension)
 }
