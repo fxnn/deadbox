@@ -75,6 +75,13 @@ func (w *workers) PutWorker(worker *model.Worker) error {
 		if err != nil {
 			return fmt.Errorf("couldn't store worker %v: %v", v, err)
 		}
+
+		// NOTE: now create other buckets that are assumed to exist later
+		_, err = findOrCreateRequestBucket(tx, worker.Id)
+		if err != nil {
+			return fmt.Errorf("couldn't create request bucket for worker %s: %v", string(worker.Id), err)
+		}
+
 		return nil
 	})
 }
