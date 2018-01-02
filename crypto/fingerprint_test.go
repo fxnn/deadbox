@@ -15,9 +15,10 @@ func TestFingerprintPublicKey(t *testing.T) {
 	encryptionType := encryptionTypeAESPlusRSA
 
 	assertFingerprint(t, "6W:HJ:QI:MS:AF:VL:HD:LB", 0, 8, key, encryptionType)
-	assertFingerprint(t, "UO:4H:KV:XF:SL:GP:OH:AN", 1, 8, key, encryptionType)
-	assertFingerprint(t, "VY:NC:DT:LR:I5:OJ:5B:SC", 2, 8, key, encryptionType)
-	assertFingerprint(t, "6S:GL:5D:TN:A4:CJ:GZ:P6", 3, 8, key, encryptionType)
+	assertFingerprint(t, "AX:MZ:N4:UJ:JZ:B7:EF:US", 4, 8, key, encryptionType)
+	assertFingerprint(t, "UO:4H:KV:XF:SL:GP:OH:AN", 8, 8, key, encryptionType)
+	assertFingerprint(t, "VY:NC:DT:LR:I5:OJ:5B:SC", 16, 8, key, encryptionType)
+	assertFingerprint(t, "67:R3:EW:3E:JI:FE:2V:FB", 21, 8, key, encryptionType)
 
 }
 
@@ -26,22 +27,36 @@ func TestIsPassChallenge(t *testing.T) {
 	assertTrue(isPassChallenge([]byte{0}, 1), t)
 	assertTrue(isPassChallenge([]byte{0}, 0), t)
 
-	assertFalse(isPassChallenge([]byte{1}, 1), t)
+	assertFalse(isPassChallenge([]byte{1}, 8), t)
+	assertTrue(isPassChallenge([]byte{1}, 7), t)
+	assertTrue(isPassChallenge([]byte{1}, 1), t)
 	assertTrue(isPassChallenge([]byte{1}, 0), t)
 
-	assertFalse(isPassChallenge([]byte{1, 0}, 2), t)
-	assertFalse(isPassChallenge([]byte{1, 0}, 1), t)
-	assertFalse(isPassChallenge([]byte{1, 1}, 1), t)
-	assertTrue(isPassChallenge([]byte{1, 0}, 0), t)
-	assertTrue(isPassChallenge([]byte{0, 1}, 1), t)
-	assertTrue(isPassChallenge([]byte{0, 0}, 2), t)
+	assertFalse(isPassChallenge([]byte{255}, 8), t)
+	assertFalse(isPassChallenge([]byte{255}, 1), t)
+	assertTrue(isPassChallenge([]byte{255}, 0), t)
+
+	assertTrue(isPassChallenge([]byte{1, 0}, 7), t)
+	assertFalse(isPassChallenge([]byte{1, 0}, 8), t)
+	assertFalse(isPassChallenge([]byte{1, 0}, 9), t)
+	assertFalse(isPassChallenge([]byte{1, 1}, 8), t)
+
+	assertTrue(isPassChallenge([]byte{0, 1}, 8), t)
+	assertTrue(isPassChallenge([]byte{0, 1}, 15), t)
+	assertFalse(isPassChallenge([]byte{0, 1}, 16), t)
+
+	assertTrue(isPassChallenge([]byte{0, 255}, 8), t)
+	assertFalse(isPassChallenge([]byte{0, 255}, 9), t)
+
+	assertTrue(isPassChallenge([]byte{0, 0, 255}, 16), t)
+	assertFalse(isPassChallenge([]byte{0, 0, 255}, 17), t)
 
 }
 
 func assertFingerprint(
 	t *testing.T,
 	expected string,
-	challengeLevel int,
+	challengeLevel uint,
 	fingerprintLengthInGroups int,
 	key *rsa.PublicKey,
 	encryptionType string,

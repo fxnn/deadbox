@@ -21,7 +21,7 @@ var fingerprintEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 func FingerprintPublicKey(
 	key *rsa.PublicKey,
 	encryptionType string,
-	challengeLevel int,
+	challengeLevel uint,
 	fingerprintLengthInGroups int,
 ) (string, error) {
 	keyBytes, err := marshalPublicKey(key)
@@ -34,7 +34,8 @@ func FingerprintPublicKey(
 		return "", fmt.Errorf("generating hashsum failed: %s", err)
 	}
 
-	hashSumString := fingerprintEncoding.EncodeToString(hashSum[challengeLevel:])
+	numberOfOmittedBytes := (challengeLevel + 7) / 8
+	hashSumString := fingerprintEncoding.EncodeToString(hashSum[numberOfOmittedBytes:])
 	fingerprint := generateGroupedFingerprint(hashSumString,
 		fingerprintLengthInGroups,
 		fingerprintGroupSeparator)
@@ -46,7 +47,7 @@ func findChallengeSolution(
 	keyBytes []byte,
 	encryptionType string,
 	hashFunction crypto.Hash,
-	challengeLevel int,
+	challengeLevel uint,
 ) (hashSum []byte, challengeSolution int, err error) {
 	for challengeSolution = 0; !isPassChallenge(hashSum, challengeLevel); challengeSolution++ {
 		hashSum, err = generateHashSum(challengeSolution, keyBytes, encryptionType, hashFunction)
@@ -58,15 +59,26 @@ func findChallengeSolution(
 	return
 }
 
-func isPassChallenge(hashInput []byte, challengeLevel int) bool {
+func isPassChallenge(hashInput []byte, challengeLevel uint) bool {
 	if hashInput == nil {
 		return false
 	}
+	if challengeLevel == 0 {
+		return true
+	}
 
-	for _, b := range hashInput[:challengeLevel] {
+	idxOfFirstNonZeroByte := challengeLevel / 8 // note, that '/' is always floor'd
+	for _, b := range hashInput[:idxOfFirstNonZeroByte] {
 		if b != 0 {
 			return false
 		}
+	}
+
+	if uint(len(hashInput)) > idxOfFirstNonZeroByte {
+		lastByteRequiredToContainZeroBit := hashInput[idxOfFirstNonZeroByte]
+		numberOfRequiredZeroBits := challengeLevel % 8
+		shouldBeZero := lastByteRequiredToContainZeroBit >> (8 - numberOfRequiredZeroBits)
+		return shouldBeZero == 0
 	}
 
 	return true
