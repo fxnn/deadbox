@@ -140,8 +140,12 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 	if err != nil {
 		t.Fatalf("couldn't generate public key bytes: %s", err)
 	}
+	fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, 10, 4)
+	if err != nil {
+		t.Fatalf("couldn't fingerprint public key: %s", err)
+	}
 
-	workerDaemon := worker.New(cfg, db, privateKeyBytes)
+	workerDaemon := worker.New(cfg, fingerprint, db, privateKeyBytes)
 	workerDaemon.OnStop(func() error {
 		if err := db.Close(); err != nil {
 			return err

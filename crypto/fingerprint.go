@@ -20,7 +20,6 @@ var fingerprintEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 func FingerprintPublicKey(
 	key *rsa.PublicKey,
-	encryptionType string,
 	challengeLevel uint,
 	fingerprintLengthInGroups int,
 ) (string, error) {
@@ -29,7 +28,7 @@ func FingerprintPublicKey(
 		return "", fmt.Errorf("marshalling public key failed: %s", err)
 	}
 
-	hashInputPrefix, err := generateHashInputPrefix(challengeLevel, keyBytes, encryptionType)
+	hashInputPrefix, err := generateHashInputPrefix(challengeLevel, keyBytes)
 	if err != nil {
 		return "", fmt.Errorf("generating hash input failed: %s", err)
 	}
@@ -109,14 +108,10 @@ func generateHashSum(
 func generateHashInputPrefix(
 	challengeLevel uint,
 	keyBytes []byte,
-	encryptionType string,
 ) ([]byte, error) {
 	var hashInputBuffer bytes.Buffer
 
 	hashInputBuffer.Write(keyBytes)
-	hashInputBuffer.WriteString(hashSeparator)
-
-	hashInputBuffer.WriteString(encryptionType)
 	hashInputBuffer.WriteString(hashSeparator)
 
 	if err := binary.Write(&hashInputBuffer, binary.BigEndian, int64(challengeLevel)); err != nil {

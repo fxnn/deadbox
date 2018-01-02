@@ -12,13 +12,12 @@ func TestFingerprintPublicKey(t *testing.T) {
 		N: big.NewInt(42),
 		E: 13,
 	}
-	encryptionType := encryptionTypeAESPlusRSA
 
-	assertFingerprint(t, "QX:HG:W6:YO:R2:AC:N4:R3", 0, 8, key, encryptionType)
-	assertFingerprint(t, "BC:5X:HY:BO:VU:IB:IW:QC", 4, 8, key, encryptionType)
-	assertFingerprint(t, "GA:PB:TP:LR:WY:YU:TG:C7", 8, 8, key, encryptionType)
-	assertFingerprint(t, "4B:NN:B2:63:ZY:IK:UF:XG", 16, 8, key, encryptionType)
-	assertFingerprint(t, "YL:IK:5C:KX:6B:LO:Z7:TN", 21, 8, key, encryptionType)
+	assertFingerprint(t, "2E:J7:2J:77:GD:VL:P4:RE", 0, 8, key)
+	assertFingerprint(t, "V4:Y4:QG:23:QU:OE:W2:QJ", 4, 8, key)
+	assertFingerprint(t, "OR:NI:KT:EI:EL:LR:3U:NE", 8, 8, key)
+	assertFingerprint(t, "OT:KR:ML:FH:BR:2N:W3:NO", 16, 8, key)
+	assertFingerprint(t, "G6:UL:U7:7L:ZD:PH:3Z:SY", 21, 8, key)
 
 }
 
@@ -75,11 +74,10 @@ func assertFingerprint(
 	challengeLevel uint,
 	fingerprintLengthInGroups int,
 	key *rsa.PublicKey,
-	encryptionType string,
 ) {
 	t.Helper()
 
-	fingerprint, err := FingerprintPublicKey(key, encryptionType, challengeLevel, fingerprintLengthInGroups)
+	fingerprint, err := FingerprintPublicKey(key, challengeLevel, fingerprintLengthInGroups)
 	if err != nil {
 		t.Fatalf("generating fingerprint failed: %s", err)
 	}

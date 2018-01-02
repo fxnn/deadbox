@@ -12,6 +12,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/fxnn/deadbox/config"
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
 	"github.com/fxnn/deadbox/worker"
@@ -62,13 +63,24 @@ func waitForShutdownRequest() {
 }
 
 func runWorker(wcfg config.Worker, acfg *config.Application) daemon.Daemon {
-	var b = openDb(acfg, wcfg.Name)
 	var k = readOrCreatePrivateKeyFile(wcfg.PrivateKeyFile)
-	var d daemon.Daemon = worker.New(wcfg, b, k)
+	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
+
+	var b = openDb(acfg, id)
+	var d daemon.Daemon = worker.New(wcfg, id, b, k)
 	d.OnStop(b.Close)
 	d.Start()
 
 	return d
+}
+func generateWorkerId(privateKeyBytes []byte, fingerprintLength int, challengeLevel uint) string {
+	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(privateKeyBytes); err != nil {
+		panic(fmt.Errorf("couldn't read private key file: %s", err))
+	} else if fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, challengeLevel, fingerprintLength); err != nil {
+		panic(err)
+	} else {
+		return fingerprint
+	}
 }
 
 func readOrCreatePrivateKeyFile(fileName string) []byte {

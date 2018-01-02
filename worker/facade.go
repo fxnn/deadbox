@@ -38,22 +38,21 @@ type facade struct {
 	privateKeyBytes             []byte
 }
 
-func New(c config.Worker, db *bolt.DB, privateKeyBytes []byte) Daemonized {
+func New(c config.Worker, id string, db *bolt.DB, privateKeyBytes []byte) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
-	id := generateWorkerId()
 	f := &facade{
 		db:                         db,
 		dropUrl:                    c.DropUrl,
 		privateKeyBytes:            privateKeyBytes,
 		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
 		registrations: registrations{
-			id:   id,
+			id:   model.WorkerId(id),
 			drop: drop,
 			name: c.Name,
 			registrationTimeoutDuration: time.Duration(c.RegistrationTimeoutInSeconds) * time.Second,
 		},
 		requests: requests{
-			id:   id,
+			id:   model.WorkerId(id),
 			drop: drop,
 		},
 		requestProcessors: &requestProcessors{

@@ -280,7 +280,6 @@ The algorithm consists of the following steps.
 
 * Bring the public key into a binary representation,
 * Add other information which must be protected against tampering:
-  * Encryption type, i.e. RSA+AES
   * the `ChallengeLevel` itself,
 * Add a `challengeSolution`, which is initially `0`,
 * Calculate the hashsum of these data using `HashFunction`,
