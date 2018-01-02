@@ -145,7 +145,7 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 		t.Fatalf("couldn't fingerprint public key: %s", err)
 	}
 
-	workerDaemon := worker.New(cfg, fingerprint, db, privateKeyBytes)
+	workerDaemon := worker.New(cfg, fingerprint, db, privateKey)
 	workerDaemon.OnStop(func() error {
 		if err := db.Close(); err != nil {
 			return err
