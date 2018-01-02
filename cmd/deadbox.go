@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -64,7 +65,7 @@ func waitForShutdownRequest() {
 }
 
 func runWorker(wcfg *config.Worker, acfg *config.Application) daemon.Daemon {
-	var k = readOrCreatePrivateKeyFile(acfg, wcfg)
+	var k = readOrCreatePrivateKey(acfg, wcfg)
 	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
 
 	var b = openDb(acfg, wcfg.Name)
@@ -74,17 +75,16 @@ func runWorker(wcfg *config.Worker, acfg *config.Application) daemon.Daemon {
 
 	return d
 }
-func generateWorkerId(privateKeyBytes []byte, fingerprintLength uint, challengeLevel uint) string {
-	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(privateKeyBytes); err != nil {
-		panic(fmt.Errorf("couldn't read private key file: %s", err))
-	} else if fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, challengeLevel, fingerprintLength); err != nil {
+
+func generateWorkerId(privateKey *rsa.PrivateKey, fingerprintLength uint, challengeLevel uint) string {
+	if fingerprint, err := crypto.FingerprintPublicKey(&privateKey.PublicKey, challengeLevel, fingerprintLength); err != nil {
 		panic(err)
 	} else {
 		return fingerprint
 	}
 }
 
-func readOrCreatePrivateKeyFile(acfg *config.Application, wcfg *config.Worker) []byte {
+func readOrCreatePrivateKey(acfg *config.Application, wcfg *config.Worker) *rsa.PrivateKey {
 	fileName := privateKeyFileName(acfg.PrivateKeyPath, wcfg.Name)
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -92,6 +92,7 @@ func readOrCreatePrivateKeyFile(acfg *config.Application, wcfg *config.Worker) [
 			panic(fmt.Errorf("couldn't read file %s: %s", fileName, err))
 		}
 
+		log.Printf("worker '%s' has no private key, generating one", wcfg.Name)
 		bytes, err = worker.GeneratePrivateKeyBytes(wcfg.PrivateKeySize)
 		if err != nil {
 			panic(fmt.Errorf("couldn't generate private key: %s", err))
@@ -103,7 +104,16 @@ func readOrCreatePrivateKeyFile(acfg *config.Application, wcfg *config.Worker) [
 		}
 	}
 
-	return bytes
+	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(bytes); err != nil {
+		panic(fmt.Errorf("couldn't read private key from file %s: %s", fileName, err))
+	} else {
+		if privateKey.N.BitLen() != wcfg.PrivateKeySize {
+			log.Printf("worker '%s' has configured key size '%d', but existing key has size '%d'",
+				wcfg.Name, wcfg.PrivateKeySize, privateKey.N.BitLen())
+		}
+
+		return privateKey
+	}
 }
 
 func serveDrop(dcfg *config.Drop, acfg *config.Application) daemon.Daemon {

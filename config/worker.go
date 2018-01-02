@@ -36,6 +36,6 @@ type Worker struct {
 	// validate the fingerprint.
 	PublicKeyFingerprintChallengeLevel uint
 
-	// PrivateKeySize is the size of the private RSA key in bytes, mostly 2048 oder 4096.
+	// PrivateKeySize is the size of the private RSA key in bits, mostly 2048 oder 4096.
 	PrivateKeySize int
 }

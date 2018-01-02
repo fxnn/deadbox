@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"net/url"
 	"time"
@@ -35,15 +36,15 @@ type facade struct {
 	dropUrl                     *url.URL
 	updateRegistrationInterval  time.Duration
 	registrationTimeoutDuration time.Duration
-	privateKeyBytes             []byte
+	privateKey                  *rsa.PrivateKey
 }
 
-func New(c *config.Worker, id string, db *bolt.DB, privateKeyBytes []byte) Daemonized {
+func New(c *config.Worker, id string, db *bolt.DB, privateKey *rsa.PrivateKey) Daemonized {
 	drop := rest.NewClient(c.DropUrl)
 	f := &facade{
 		db:                         db,
 		dropUrl:                    c.DropUrl,
-		privateKeyBytes:            privateKeyBytes,
+		privateKey:                 privateKey,
 		updateRegistrationInterval: time.Duration(c.UpdateRegistrationIntervalInSeconds) * time.Second,
 		registrations: registrations{
 			id:   model.WorkerId(id),
@@ -66,11 +67,7 @@ func New(c *config.Worker, id string, db *bolt.DB, privateKeyBytes []byte) Daemo
 func (f *facade) main(stop <-chan struct{}) error {
 	var err error
 
-	privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(f.privateKeyBytes)
-	if err != nil {
-		return fmt.Errorf("worker %s could not read its private key from file %s: %s", f.QuotedNameAndId(), f.privateKeyBytes, err)
-	}
-	publicKeyBytes, err := crypto.GeneratePublicKeyBytes(privateKey)
+	publicKeyBytes, err := crypto.GeneratePublicKeyBytes(f.privateKey)
 	if err != nil {
 		return fmt.Errorf("worker %s could not export its public key: %s", f.QuotedNameAndId(), err)
 	}
@@ -90,7 +87,7 @@ func (f *facade) main(stop <-chan struct{}) error {
 		select {
 		case <-pollRequestTicker.C:
 			// @todo #3 Replace pull with push mechanism (e.g. websocket)
-			if err := f.pollRequests(f.requestProcessors, privateKey); err != nil {
+			if err := f.pollRequests(f.requestProcessors, f.privateKey); err != nil {
 				log.Printf("worker %s at drop %s could not poll requests: %s", f.QuotedNameAndId(),
 					f.dropUrl, err)
 			}
