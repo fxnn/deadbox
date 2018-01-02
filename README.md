@@ -258,27 +258,16 @@ As for a response, at least the following information need to be contained.
 
 ### Public Key Fingerprinting
 
-Creating a public key fingerprint, and therefore a Worker Id,
-incorporates the following steps.
-
-* Bring the public key into a binary representation,
-* Add other information which must be protected against tampering:
-  * Encryption type, i.e. RSA+AES
-* Add a modifier, which is an arbitrarily chosen number,
-* Calculate the hashsum of these data using `HashFunction`,
-* Verify that the leftmost `ChallengeLevel` bits of the hashsum are
-  zero,
-  * If not so, increase the modifier and recalculate the hash,
-* Encode the hashsum without the first `(ChallengeLevel+7)/8` bytes in
-  Base32,
-* Group the encoded hashsum in pairs of two characters,
-  shorten it to the first `FingerprintLength` groups and
-  separate the pairs by colons `:`.
-
-This algorithm can be configured using the two parameters
+The task of creating a public key fingerprint, and therefore a Worker
+Id, is defined by the following algorithm.
+The algorithm can be configured using the parameters
 
 * `HashFunction`. The cryptographic hash function to be used, i.e.
   SHA-256.
+* `Encoding`. The function for mapping the hash sum to its string
+  representation, i.e. Base32.
+  Base32 is chosen as default, because it performs good when it has to
+  be read by human users.
 * `ChallengeLevel`. At a value of `0`, it is very cheap to calculate
   the fingerprint, but it's also quite cheap to calculate a hash
   collision.
@@ -287,6 +276,25 @@ This algorithm can be configured using the two parameters
   providing maximum protection against hash collision search, but also
   making the fingerprint difficult to use.
 
+The algorithm consists of the following steps.
+
+* Bring the public key into a binary representation,
+* Add other information which must be protected against tampering:
+  * Encryption type, i.e. RSA+AES
+  * the `ChallengeLevel` itself,
+* Add a `challengeSolution`, which is initially `0`,
+* Calculate the hashsum of these data using `HashFunction`,
+* Verify that the leftmost `ChallengeLevel` bits of the hashsum are
+  zero,
+  * If not so, increase the `challengeSolution` by one and recalculate
+    the hash,
+* Encode the hashsum without the first `(ChallengeLevel+7)/8` bytes
+  using the `Encoding`,
+* Group the encoded hashsum in pairs of two characters,
+  shorten it to the first `FingerprintLength` groups and
+  separate the pairs by colons `:`.
+
 The params `ChallengeLevel` and `FingerprintLength` should be chosen in
 a way that low `FingerprintLength` is compensated with a high
 `CalculationCost` and vice versa.
+

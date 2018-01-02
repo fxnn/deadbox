@@ -50,7 +50,7 @@ func findChallengeSolution(
 	challengeLevel uint,
 ) (hashSum []byte, challengeSolution int, err error) {
 	for challengeSolution = 0; !isPassChallenge(hashSum, challengeLevel); challengeSolution++ {
-		hashSum, err = generateHashSum(challengeSolution, keyBytes, encryptionType, hashFunction)
+		hashSum, err = generateHashSum(challengeLevel, challengeSolution, keyBytes, encryptionType, hashFunction)
 		if err != nil {
 			return
 		}
@@ -85,12 +85,13 @@ func isPassChallenge(hashInput []byte, challengeLevel uint) bool {
 }
 
 func generateHashSum(
+	challengeLevel uint,
 	challengeSolution int,
 	keyBytes []byte,
 	encryptionType string,
 	hashFunction crypto.Hash,
 ) ([]byte, error) {
-	hashInput, err := generateHashInput(challengeSolution, keyBytes, encryptionType)
+	hashInput, err := generateHashInput(challengeLevel, challengeSolution, keyBytes, encryptionType)
 	if err != nil {
 		return nil, fmt.Errorf("generating hash input failed: %s", err)
 	}
@@ -105,7 +106,12 @@ func generateHashSum(
 	return hash.Sum([]byte{}), nil
 }
 
-func generateHashInput(modifier int, keyBytes []byte, encryptionType string) ([]byte, error) {
+func generateHashInput(
+	challengeLevel uint,
+	challengeSolution int,
+	keyBytes []byte,
+	encryptionType string,
+) ([]byte, error) {
 	var hashInputBuffer bytes.Buffer
 
 	hashInputBuffer.Write(keyBytes)
@@ -114,9 +120,13 @@ func generateHashInput(modifier int, keyBytes []byte, encryptionType string) ([]
 	hashInputBuffer.WriteString(encryptionType)
 	hashInputBuffer.WriteString(hashSeparator)
 
-	err := binary.Write(&hashInputBuffer, binary.BigEndian, int64(modifier))
-	if err != nil {
-		return nil, fmt.Errorf("writing modifier failed: %s", err)
+	if err := binary.Write(&hashInputBuffer, binary.BigEndian, int64(challengeLevel)); err != nil {
+		return nil, fmt.Errorf("writing challengeLevel failed: %s", err)
+	}
+	hashInputBuffer.WriteString(hashSeparator)
+
+	if err := binary.Write(&hashInputBuffer, binary.BigEndian, int64(challengeSolution)); err != nil {
+		return nil, fmt.Errorf("writing challengeSolution failed: %s", err)
 	}
 
 	// @todo #27 add validity time

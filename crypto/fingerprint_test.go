@@ -14,11 +14,11 @@ func TestFingerprintPublicKey(t *testing.T) {
 	}
 	encryptionType := encryptionTypeAESPlusRSA
 
-	assertFingerprint(t, "6W:HJ:QI:MS:AF:VL:HD:LB", 0, 8, key, encryptionType)
-	assertFingerprint(t, "AX:MZ:N4:UJ:JZ:B7:EF:US", 4, 8, key, encryptionType)
-	assertFingerprint(t, "UO:4H:KV:XF:SL:GP:OH:AN", 8, 8, key, encryptionType)
-	assertFingerprint(t, "VY:NC:DT:LR:I5:OJ:5B:SC", 16, 8, key, encryptionType)
-	assertFingerprint(t, "67:R3:EW:3E:JI:FE:2V:FB", 21, 8, key, encryptionType)
+	assertFingerprint(t, "QX:HG:W6:YO:R2:AC:N4:R3", 0, 8, key, encryptionType)
+	assertFingerprint(t, "BC:5X:HY:BO:VU:IB:IW:QC", 4, 8, key, encryptionType)
+	assertFingerprint(t, "GA:PB:TP:LR:WY:YU:TG:C7", 8, 8, key, encryptionType)
+	assertFingerprint(t, "4B:NN:B2:63:ZY:IK:UF:XG", 16, 8, key, encryptionType)
+	assertFingerprint(t, "YL:IK:5C:KX:6B:LO:Z7:TN", 21, 8, key, encryptionType)
 
 }
 
