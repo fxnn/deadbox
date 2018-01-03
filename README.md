@@ -7,6 +7,7 @@ A program in your private network connects to an internet-accessible server, rea
 [![Build Status](https://travis-ci.org/fxnn/deadbox.svg?branch=master)](https://travis-ci.org/fxnn/deadbox)
 [![codecov](https://codecov.io/gh/fxnn/deadbox/branch/master/graph/badge.svg)](https://codecov.io/gh/fxnn/deadbox)
 [![0pdd.com](http://www.0pdd.com/svg?name=fxnn/deadbox)](http://www.0pdd.com/p?name=fxnn/deadbox)
+[![GoDoc](https://godoc.org/github.com/fxnn/deadbox?status.svg)](https://godoc.org/github.com/fxnn/deadbox)
 
 *I'm very happy to hear your feedback and ideas. Simply file an issue!*
 
