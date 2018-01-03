@@ -12,17 +12,18 @@ import (
 type Server struct {
 	addr    string
 	server  *http.Server
+	tls     TLS
 	router  *router
 	stopped chan error
 }
 
-func NewServer(addr string, drop model.Drop) *Server {
-	return &Server{addr: addr, router: newRouter(drop)}
+func NewServer(addr string, tls TLS, drop model.Drop) *Server {
+	return &Server{addr: addr, tls: tls, router: newRouter(drop)}
 }
 
 func (s *Server) Close() error {
 	if s.server != nil {
-		var err error = s.server.Shutdown(context.Background())
+		err := s.server.Shutdown(context.Background())
 		s.server = nil
 		if err != nil {
 			<-s.stopped
@@ -34,8 +35,12 @@ func (s *Server) Close() error {
 	return nil
 }
 
-func (s *Server) StartServing() error {
+func (s *Server) StartServing() (err error) {
 	s.server = &http.Server{Addr: s.addr, Handler: s.router}
+	if s.server.TLSConfig, err = s.tls.Config(); err != nil {
+		return
+	}
+
 	s.stopped = make(chan error)
 
 	go func() {
@@ -45,5 +50,5 @@ func (s *Server) StartServing() error {
 		}
 	}()
 
-	return nil
+	return
 }

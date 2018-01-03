@@ -24,15 +24,17 @@ type facade struct {
 	daemon.Daemon
 	name          string
 	listenAddress string
+	tls           rest.TLS
 	*workers
 	*requests
 	*responses
 }
 
-func New(c *config.Drop, db *bolt.DB) Daemonized {
+func New(c *config.Drop, db *bolt.DB, tls rest.TLS) Daemonized {
 	f := &facade{
 		name:          c.Name,
 		listenAddress: c.ListenAddress,
+		tls:           tls,
 		workers:       &workers{db, time.Duration(c.MaxWorkerTimeoutInSeconds) * time.Second},
 		requests:      &requests{db, time.Duration(c.MaxRequestTimeoutInSeconds) * time.Second},
 		responses:     &responses{db, time.Duration(c.MaxRequestTimeoutInSeconds) * time.Second},
@@ -42,7 +44,7 @@ func New(c *config.Drop, db *bolt.DB) Daemonized {
 }
 
 func (f *facade) main(stop <-chan struct{}) error {
-	server := rest.NewServer(f.listenAddress, f)
+	server := rest.NewServer(f.listenAddress, f.tls, f)
 	if err := server.StartServing(); err != nil {
 		return fmt.Errorf("drop %s on %s could not be started: %s", f.quotedName(), f.listenAddress, err)
 	}

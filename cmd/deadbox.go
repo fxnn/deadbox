@@ -16,6 +16,7 @@ import (
 	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/daemon"
 	"github.com/fxnn/deadbox/drop"
+	"github.com/fxnn/deadbox/rest"
 	"github.com/fxnn/deadbox/worker"
 )
 
@@ -118,7 +119,7 @@ func readOrCreatePrivateKey(acfg *config.Application, wcfg *config.Worker) *rsa.
 
 func serveDrop(dcfg *config.Drop, acfg *config.Application) daemon.Daemon {
 	var b = openDb(acfg, dcfg.Name)
-	var d daemon.Daemon = drop.New(dcfg, b)
+	var d daemon.Daemon = drop.New(dcfg, b, rest.NoTLS())
 	d.OnStop(b.Close)
 	d.Start()
 

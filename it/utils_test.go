@@ -97,7 +97,7 @@ func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 		t.Fatalf("could not open Drop's BoltDB: %s", err)
 	}
 
-	dropDaemon := drop.New(cfg, db)
+	dropDaemon := drop.New(cfg, db, rest.NoTLS())
 	dropDaemon.OnStop(func() error {
 		if err := db.Close(); err != nil {
 			return err
