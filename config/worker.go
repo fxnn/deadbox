@@ -9,7 +9,6 @@ const (
 	DefaultRegistrationTimeoutInSeconds        = 10 * DefaultUpdateRegistrationIntervalInSeconds
 	DefaultPublicKeyFingerprintLength          = 8
 	DefaultPublicKeyFingerprintChallengeLevel  = 21
-	DefaultPrivateKeySize                      = 4096
 )
 
 // Worker configuration, created once per configured worker.

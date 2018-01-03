@@ -24,6 +24,7 @@ const (
 	filePermOnlyUserCanReadOrWrite = 0600
 	dbFileExtension                = "boltdb"
 	privateKeyFileExtension        = "pem"
+	certFileExtension              = "pem"
 )
 
 func main() {
@@ -66,12 +67,15 @@ func waitForShutdownRequest() {
 }
 
 func runWorker(wcfg *config.Worker, acfg *config.Application) daemon.Daemon {
-	var k = readOrCreatePrivateKey(acfg, wcfg)
-	var id = generateWorkerId(k, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
+	var _, key, err = readOrCreatePrivateKey(acfg.PrivateKeyPath, wcfg.Name, wcfg.PrivateKeySize)
+	if err != nil {
+		panic(err)
+	}
+	var id = generateWorkerId(key, wcfg.PublicKeyFingerprintLength, wcfg.PublicKeyFingerprintChallengeLevel)
+	var db = openDb(acfg, wcfg.Name)
 
-	var b = openDb(acfg, wcfg.Name)
-	var d daemon.Daemon = worker.New(wcfg, id, b, k)
-	d.OnStop(b.Close)
+	var d daemon.Daemon = worker.New(wcfg, id, db, key)
+	d.OnStop(db.Close)
 	d.Start()
 
 	return d
@@ -85,45 +89,80 @@ func generateWorkerId(privateKey *rsa.PrivateKey, fingerprintLength uint, challe
 	}
 }
 
-func readOrCreatePrivateKey(acfg *config.Application, wcfg *config.Worker) *rsa.PrivateKey {
-	fileName := privateKeyFileName(acfg.PrivateKeyPath, wcfg.Name)
-	bytes, err := ioutil.ReadFile(fileName)
+func readOrCreatePrivateKey(privateKeyPath string, name string, privateKeySize int) (fileName string, privateKey *rsa.PrivateKey, err error) {
+	var bytes []byte
+
+	fileName = privateKeyFileName(privateKeyPath, name)
+	bytes, err = ioutil.ReadFile(fileName)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			panic(fmt.Errorf("couldn't read file %s: %s", fileName, err))
+			err = fmt.Errorf("couldn't read file %s: %s", fileName, err)
+			return
 		}
 
-		log.Printf("worker '%s' has no private key, generating one", wcfg.Name)
-		bytes, err = worker.GeneratePrivateKeyBytes(wcfg.PrivateKeySize)
+		log.Printf("worker '%s' has no private key, generating one", name)
+		bytes, err = worker.GeneratePrivateKeyBytes(privateKeySize)
 		if err != nil {
-			panic(fmt.Errorf("couldn't generate private key: %s", err))
+			err = fmt.Errorf("couldn't generate private key: %s", err)
+			return
 		}
 
 		err = ioutil.WriteFile(fileName, bytes, filePermOnlyUserCanReadOrWrite)
 		if err != nil {
-			panic(fmt.Errorf("couldn't write generated private key to file %s: %s", fileName, err))
+			err = fmt.Errorf("couldn't write generated private key to file %s: %s", fileName, err)
+			return
 		}
 	}
 
-	if privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(bytes); err != nil {
-		panic(fmt.Errorf("couldn't read private key from file %s: %s", fileName, err))
-	} else {
-		if privateKey.N.BitLen() != wcfg.PrivateKeySize {
-			log.Printf("worker '%s' has configured key size '%d', but existing key has size '%d'",
-				wcfg.Name, wcfg.PrivateKeySize, privateKey.N.BitLen())
-		}
-
-		return privateKey
+	if privateKey, err = crypto.UnmarshalPrivateKeyFromPEMBytes(bytes); err != nil {
+		err = fmt.Errorf("couldn't read private key from file %s: %s", fileName, err)
+		return
 	}
+	if privateKey.N.BitLen() != privateKeySize {
+		log.Printf("worker '%s' has configured key size '%d', but existing key has size '%d'",
+			name, privateKeySize, privateKey.N.BitLen())
+	}
+
+	return
 }
 
-func serveDrop(dcfg *config.Drop, acfg *config.Application) daemon.Daemon {
-	var b = openDb(acfg, dcfg.Name)
-	var d daemon.Daemon = drop.New(dcfg, b, rest.NoTLS())
-	d.OnStop(b.Close)
-	d.Start()
+func serveDrop(dcfg *config.Drop, acfg *config.Application) (daemon daemon.Daemon) {
+	db := openDb(acfg, dcfg.Name)
+	tls, err := getOrCreateTLSCertFiles(acfg.CertPath, acfg.PrivateKeyPath, dcfg.Name, dcfg.PrivateKeySize, dcfg.CertificateValidFor, dcfg.CertificateHosts)
+	if err != nil {
+		panic(err)
+	}
 
-	return d
+	daemon = drop.New(dcfg, db, tls)
+	daemon.OnStop(db.Close)
+	daemon.Start()
+
+	return
+}
+
+func getOrCreateTLSCertFiles(certPath string, privateKeyPath string, name string, privateKeySize int, certificateValidFor time.Duration, hosts []string) (rest.TLS, error) {
+	privateKeyFile, privateKey, err := readOrCreatePrivateKey(privateKeyPath, name, privateKeySize)
+	if err != nil {
+		return nil, err
+	}
+
+	certFile := certFileName(certPath, name)
+	if _, err := os.Stat(certFile); os.IsNotExist(err) {
+		log.Printf("drop '%s' has no certificate, generating one", name)
+		bytes, err := crypto.GenerateCertificateBytes(privateKey, certificateValidFor, hosts)
+		if err != nil {
+			err = fmt.Errorf("couldn't generate certificate: %s", err)
+			return nil, err
+		}
+
+		err = ioutil.WriteFile(certFile, bytes, filePermOnlyUserCanReadOrWrite)
+		if err != nil {
+			err = fmt.Errorf("couldn't write generated certificate to file %s: %s", certFile, err)
+			return nil, err
+		}
+	}
+
+	return rest.NewFileBasedTLS(privateKeyFile, certFile), nil
 }
 
 func openDb(cfg *config.Application, name string) *bolt.DB {
@@ -146,6 +185,10 @@ func dbFileName(cfg *config.Application, name string) string {
 	return filepath.Join(cfg.DbPath, name+"."+dbFileExtension)
 }
 
-func privateKeyFileName(path string, workerName string) string {
-	return filepath.Join(path, workerName+"."+privateKeyFileExtension)
+func privateKeyFileName(path string, name string) string {
+	return filepath.Join(path, name+".private."+privateKeyFileExtension)
+}
+
+func certFileName(path string, dropName string) string {
+	return filepath.Join(path, dropName+"."+certFileExtension)
 }
