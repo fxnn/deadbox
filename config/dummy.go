@@ -9,8 +9,6 @@ func Dummy() *Application {
 		DropUrl: dropUrl,
 		UpdateRegistrationIntervalInSeconds: DefaultUpdateRegistrationIntervalInSeconds,
 		RegistrationTimeoutInSeconds:        DefaultRegistrationTimeoutInSeconds,
-		PublicKeyFingerprintChallengeLevel:  DefaultPublicKeyFingerprintChallengeLevel,
-		PublicKeyFingerprintLength:          DefaultPublicKeyFingerprintLength,
 		PrivateKeySize:                      DefaultPrivateKeySize,
 	}
 	d := Drop{
@@ -27,6 +25,8 @@ func Dummy() *Application {
 		CertPath:       "./",
 		Workers:        []Worker{w},
 		Drops:          []Drop{d},
+		PublicKeyFingerprintChallengeLevel: DefaultPublicKeyFingerprintChallengeLevel,
+		PublicKeyFingerprintLength:         DefaultPublicKeyFingerprintLength,
 	}
 	return app
 }

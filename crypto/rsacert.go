@@ -19,6 +19,16 @@ const (
 
 var serialNumberLimit = new(big.Int).Lsh(big.NewInt(1), 128)
 
+func UnmarshalCertificateFromPEMBytes(bytes []byte) (*x509.Certificate, error) {
+	if keyBlock, _ := pem.Decode(bytes); keyBlock == nil {
+		return nil, fmt.Errorf("could not parse PEM data")
+	} else if keyBlock.Type != pemBlockTypeCertificate {
+		return nil, fmt.Errorf("unsupported certificate type: %s", keyBlock.Type)
+	} else {
+		return x509.ParseCertificate(keyBlock.Bytes)
+	}
+}
+
 func GenerateCertificateBytes(privateKey *rsa.PrivateKey, validFor time.Duration, hosts []string) ([]byte, error) {
 	certificate, err := createCertificate(certificateOrganization, validFor, hosts, false)
 	if err != nil {
@@ -60,7 +70,7 @@ func createCertificate(organization string, validFor time.Duration, hosts []stri
 	certificate := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{certificateOrganization},
+			Organization: []string{organization},
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,

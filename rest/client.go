@@ -2,22 +2,38 @@ package rest
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
+	"github.com/fxnn/deadbox/crypto"
 	"github.com/fxnn/deadbox/model"
 )
 
 // client implements a REST client to a drop server.
 type client struct {
 	baseUrl *url.URL
+	wrapped *http.Client
 }
 
-func NewClient(url *url.URL) model.Drop {
-	return &client{url}
+// NewClient creates a new client for the given base URL.
+// When verifyByFingerprint is set, regular certificate validation is disabled for TLS connections.
+// Instead, the client expects a certificate (may be self-signed) for a public key with the given fingerprint
+// configuration.
+func NewClient(url *url.URL, verifyByFingerprint *crypto.VerifyByFingerprint) model.Drop {
+	wrapped := &http.Client{}
+	if verifyByFingerprint != nil {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify:    true,
+			VerifyPeerCertificate: verifyByFingerprint.VerifyPeerCertificate,
+		}
+		wrapped.Transport = &http.Transport{TLSClientConfig: tlsConfig}
+	}
+
+	return &client{baseUrl: url, wrapped: wrapped}
 }
 
 func (c *client) Workers() (workers []model.Worker, err error) {
@@ -61,7 +77,7 @@ func (c *client) post(path string, source interface{}) error {
 	}
 
 	address := c.resolveAddress(path)
-	resp, err := http.Post(address, "application/json", bytes.NewReader(v))
+	resp, err := c.wrapped.Post(address, "application/json", bytes.NewReader(v))
 	if err != nil {
 		return fmt.Errorf("POST request to '%s' failed: %s", path, err)
 	}
@@ -71,7 +87,7 @@ func (c *client) post(path string, source interface{}) error {
 
 func (c *client) assertStatusOk(resp *http.Response) error {
 	if resp.StatusCode != http.StatusOK {
-		var bodyStr string = "<response body not available>"
+		var bodyStr = "<response body not available>"
 		if bodyBytes, err := ioutil.ReadAll(resp.Body); err == nil {
 			bodyStr = string(bodyBytes)
 		}
@@ -85,7 +101,7 @@ func (c *client) get(path string, target interface{}) error {
 	var err error
 
 	address := c.resolveAddress(path)
-	resp, err := http.Get(address)
+	resp, err := c.wrapped.Get(address)
 	if err != nil {
 		return fmt.Errorf("GET request to '%s' failed: %s", address, err)
 	}

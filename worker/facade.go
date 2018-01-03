@@ -39,8 +39,8 @@ type facade struct {
 	privateKey                  *rsa.PrivateKey
 }
 
-func New(c *config.Worker, id string, db *bolt.DB, privateKey *rsa.PrivateKey) Daemonized {
-	drop := rest.NewClient(c.DropUrl)
+func New(c *config.Worker, id string, db *bolt.DB, privateKey *rsa.PrivateKey, fingerprintLength uint, fingerprintChallengeLevel uint) Daemonized {
+	drop := rest.NewClient(c.DropUrl, verifyByFingerprint(c.DropFingerprint, fingerprintLength, fingerprintChallengeLevel))
 	f := &facade{
 		db:                         db,
 		dropUrl:                    c.DropUrl,
@@ -62,6 +62,18 @@ func New(c *config.Worker, id string, db *bolt.DB, privateKey *rsa.PrivateKey) D
 	}
 	f.Daemon = daemon.New(f.main)
 	return f
+}
+
+func verifyByFingerprint(fingerprint string, fingerprintLength uint, fingerprintChallengeLevel uint) (verifyByFingerprint *crypto.VerifyByFingerprint) {
+	if fingerprint != "" {
+		verifyByFingerprint = &crypto.VerifyByFingerprint{
+			Fingerprint:               fingerprint,
+			FingerprintLength:         fingerprintLength,
+			FingerprintChallengeLevel: fingerprintChallengeLevel,
+		}
+	}
+
+	return
 }
 
 func (f *facade) main(stop <-chan struct{}) error {
@@ -99,13 +111,5 @@ func (f *facade) main(stop <-chan struct{}) error {
 		case <-stop:
 			return nil
 		}
-	}
-}
-
-func GeneratePrivateKeyBytes(rsaKeySize int) ([]byte, error) {
-	if key, err := crypto.GeneratePrivateKey(rsaKeySize); err != nil {
-		return nil, fmt.Errorf("could not generate private key: %s", err)
-	} else {
-		return crypto.MarshalPrivateKeyToPEMBytes(key), nil
 	}
 }

@@ -109,7 +109,7 @@ func runDropDaemon(t *testing.T) (daemon.Daemon, model.Drop) {
 	})
 	dropDaemon.Start()
 
-	dropClient := rest.NewClient(parseUrlOrPanic("http://localhost:" + port))
+	dropClient := rest.NewClient(parseUrlOrPanic("http://localhost:"+port), nil)
 
 	return dropDaemon, dropClient
 }
@@ -127,14 +127,9 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 	if err != nil {
 		t.Fatalf("could not open Worker's BoltDB: %s", err)
 	}
-	privateKeyBytes, err := worker.GeneratePrivateKeyBytes(2048)
+	privateKey, err := crypto.GeneratePrivateKey(2048)
 	if err != nil {
 		t.Fatalf("couldn't generate private key: %s", err)
-	}
-
-	privateKey, err := crypto.UnmarshalPrivateKeyFromPEMBytes(privateKeyBytes)
-	if err != nil {
-		t.Fatalf("couldn't unmarshal private key: %s", err)
 	}
 	publicKeyBytes, err := crypto.GeneratePublicKeyBytes(privateKey)
 	if err != nil {
@@ -145,7 +140,7 @@ func runWorkerDaemon(t *testing.T) (worker.Daemonized, []byte) {
 		t.Fatalf("couldn't fingerprint public key: %s", err)
 	}
 
-	workerDaemon := worker.New(cfg, fingerprint, db, privateKey)
+	workerDaemon := worker.New(cfg, fingerprint, db, privateKey, config.DefaultPublicKeyFingerprintLength, config.DefaultPublicKeyFingerprintChallengeLevel)
 	workerDaemon.OnStop(func() error {
 		if err := db.Close(); err != nil {
 			return err

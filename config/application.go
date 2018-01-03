@@ -4,8 +4,10 @@ const (
 	// DefaultPort is the port used by the application per default.
 	// It was selected such that it doesn't seem that other applications use it as
 	// a default.
-	DefaultPort           = "6545"
-	DefaultPrivateKeySize = 4096
+	DefaultPort                               = "6545"
+	DefaultPrivateKeySize                     = 4096
+	DefaultPublicKeyFingerprintLength         = 8
+	DefaultPublicKeyFingerprintChallengeLevel = 21
 )
 
 // Application configuration, created once in application lifecycle.
@@ -28,4 +30,13 @@ type Application struct {
 
 	// Drops configured in this application
 	Drops []Drop
+
+	// PublicKeyFingerprintLength influences the length of the public keys fingerprint. The greater the length, the
+	// more reliable the fingerprint is, but the harder it is to remember for human users.
+	PublicKeyFingerprintLength uint
+
+	// PublicKeyFingerprintChallengeLevel influences the time it takes to generate the fingerprint. The greater the
+	// level, the more secure the fingerprint is against pre-image attacks, but the longer it takes to generate and
+	// validate the fingerprint.
+	PublicKeyFingerprintChallengeLevel uint
 }
