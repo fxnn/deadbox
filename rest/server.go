@@ -45,7 +45,7 @@ func (s *Server) StartServing() (err error) {
 
 	go func() {
 		defer close(s.stopped)
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.tls.ListenAndServe(s.server); err != nil && err != http.ErrServerClosed {
 			s.stopped <- fmt.Errorf("REST server on %s terminated unexpectedly: %s", s.addr, err)
 		}
 	}()
