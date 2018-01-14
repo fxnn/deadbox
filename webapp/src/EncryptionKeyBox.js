@@ -20,7 +20,7 @@ class EncryptionKeyBox extends Component {
                 <div>
                     <nav className="navbar is-black">
                         <div className="navbar-brand">
-                            <h1 className="is-size-4">
+                            <h1 className="is-size-5 is-vertical-center">
                                 {this.props.logo}
                             </h1>
                         </div>
