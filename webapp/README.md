@@ -16,5 +16,6 @@ This is the webapp to access a Drop.
 
 ## Docs
 
-* [create-react-app](https://github.com/facebookincubator/create-react-app/blob/master/packages/react-scripts/template/README.md), used to bootstrap this webapp
+* [webpack](https://webpack.js.org/configuration/)
+* [hyperapp](https://github.com/hyperapp/hyperapp/tree/master/docs), UI framework
 * [bulma](https://bulma.io/documentation/overview/start/), CSS framework
