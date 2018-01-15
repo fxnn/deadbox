@@ -21,11 +21,25 @@ module.exports = {
     contentBase: paths.appBuild,
   },
   module: {
-    loaders: [
+    rules: [
       {
-        // process ES6 files using babel
-        loader: 'babel-loader',
-        test: /\.(js|mjs)$/,
+        test: /\.css$/,
+        use: [
+          // HINT: style-loader generates <style> tags,
+          // css-loader just resolves the CSS name to a URL
+          { loader: "style-loader" },
+          { loader: "css-loader" }
+        ]
+      },
+      {
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['es2015']
+          }
+        }
       }
     ]
   },

@@ -1,8 +1,5 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { app } from "hyperapp"
 import './index.css';
-import App from './App';
-import registerServiceWorker from './registerServiceWorker';
+import {state, actions, view} from './App';
 
-ReactDOM.render(<App/>, document.getElementById('root'));
-registerServiceWorker();
+app(state, actions, view, document.body);
