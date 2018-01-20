@@ -18,4 +18,5 @@ This is the webapp to access a Drop.
 
 * [webpack](https://webpack.js.org/configuration/)
 * [hyperapp](https://github.com/hyperapp/hyperapp/tree/master/docs), UI framework
+  * [hyperapp/awesome](https://github.com/hyperapp/awesome#apps-and-boilerplates) is a curated list of projects built with Hyperapp.
 * [bulma](https://bulma.io/documentation/overview/start/), CSS framework

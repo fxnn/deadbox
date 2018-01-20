@@ -1,7 +1,7 @@
 'use strict';
 
-const paths = require('./config/paths');
-const polyfills = require.resolve('./config/polyfills');
+const paths = require('./paths');
+const polyfills = require.resolve('./polyfills');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -20,13 +20,19 @@ module.exports = {
     // server webpack dev server from build directory
     contentBase: paths.appBuild,
   },
+  resolve: {
+    modules: [
+      paths.appSrc, // HINT: allow for absolute path ES6 imports from 'src' directory
+      paths.appNodeModules
+    ]
+  },
   module: {
     rules: [
       {
         test: /\.css$/,
         use: [
-          // HINT: style-loader generates <style> tags,
-          // css-loader just resolves the CSS name to a URL
+          // HINT: style-loader generates <style> tags, css-loader just resolves the CSS name to a URL
+          // TODO: don't use style tags, but https://github.com/webpack-contrib/extract-text-webpack-plugin
           { loader: "style-loader" },
           { loader: "css-loader" }
         ]
@@ -37,7 +43,9 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['es2015']
+            // NOTE that we're not transpiling to ES5, but just resolving modules.
+            // Therefore, browsers need to know ES6, but don't need to know module loading.
+            plugins: ["transform-es2015-modules-commonjs"]
           }
         }
       }

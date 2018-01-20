@@ -5,3 +5,9 @@ body {
     padding: 0;
     font-family: sans-serif;
 }
+
+/* cf. https://github.com/jgthms/bulma/issues/1401#issuecomment-341570516 */
+.is-vertical-center {
+    display: flex;
+    align-items: center;
+}
