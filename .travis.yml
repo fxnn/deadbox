@@ -17,7 +17,7 @@ before_install:
 
 script:
   # webapp build
-  - npm -C webapp install && npm -C webapp build
+  - npm -C webapp install && npm -C webapp run build
   # do regular coverage
   - gotestcover -v -covermode=count -coverprofile=coverage.intrapackage.txt ./...
   # do coverage for all packages and tests in `it` package
