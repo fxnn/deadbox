@@ -1,4 +1,5 @@
 import { h } from "hyperapp"
+import { Spinner } from "app/Spinner";
 
 export const KeyGeneratingSection = ({ logo }) => (
   h("section", {class:"hero is-success is-fullheight"}, [
@@ -7,6 +8,7 @@ export const KeyGeneratingSection = ({ logo }) => (
         h("h1", {class:"title"}, [
           logo
         ]),
+        h(Spinner),
         h("p", {}, "Your key is generated, please wait ...")
       ])
     ])
