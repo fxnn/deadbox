@@ -1,6 +1,7 @@
 export default {
   state: {
-    keyAvailable: false
+    keyAvailable: false,
+    keyConfigurationAvailable: false
   },
   actions: {
     setKeyAvailable: () => (state) => ({ keyAvailable: true }),
