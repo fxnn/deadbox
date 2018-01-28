@@ -1,55 +1,60 @@
-import { ul, li, a, span, input, label } from "@hyperapp/html";
-import { card, cardContent, container, tabs, formField, formControl } from "util/bulma";
-
-const keyGenerationModeName = "keyGenerationMode";
-const keyGenerationModeWithPassphraseValue = "withPassphrase";
-const keyGenerationModeOneTimeValue = "oneTime";
+import { div, h1, label, p } from "@hyperapp/html";
+import { button, box, formField, formControl, formFieldLabel, formFieldBody, input } from "util/bulma";
 
 const keyGenerationPasswordName = "keyGenerationPassword";
 
+const blockElement = (title, children) => (
+  box([
+    h1({ class: "subtitle has-text-black" }, [title]),
+    ...children
+  ])
+);
+
 export const KeyConfigurationElement = ({ state, actions }) => (
-  tabs({ class: "is-boxed" }, [
-    ul([
-      li({ class: "is-active" }, [
-        a([
-          span([
-            "Passphrase based-key"
+  div([
+    blockElement("Passphrase based key", [
+      formField([
+        p(["Delayed responses can be retrieved even after closing this session, using the same passphrase again."]),
+      ]),
+      formField({ class: "is-horizontal" }, [
+        formFieldLabel({ class: "is-normal" }, [label({ class: "label" }, "Passphrase")]),
+        formFieldBody([
+          formField([
+            formControl([
+              input({ type: "password", name: keyGenerationPasswordName })
+            ])
           ])
         ])
       ]),
-      li([
-        a([
-          span([
-            "One-time key"
+      formField({ class: "is-horizontal" }, [
+        formFieldLabel(),
+        formFieldBody([
+          formField([
+            formControl([
+              button({ class: "is-success", onclick: () => actions.setKeyConfigured() }, [
+                "Generate key from passphrase"
+              ])
+            ])
+          ])
+        ])
+      ])
+    ]),
+    blockElement("One-time key", [
+      formField([
+        p(["After closing this session and deleting all data associated therewith, responses become unreadable."]),
+      ]),
+      formField({ class: "is-horizontal" }, [
+        formFieldLabel(),
+        formFieldBody([
+          formField([
+            formControl([
+              button({ class: "is-success", onclick: () => actions.setKeyConfigured() }, [
+                "Generate one-time key"
+              ])
+            ])
           ])
         ])
       ])
     ])
   ])
 );
-
-/*
-formField([
-            formControl([
-              label({ class: "radio" }, [
-                input({ type: "radio", name: keyGenerationModeName, value: keyGenerationModeWithPassphraseValue }),
-                "I want to generate the key using a passphrase, so that I can receive responses later on."
-              ])
-            ])
-          ]),
-          formField([
-            label({ class: "label" }, "Key Passphrase"),
-            formControl([
-              input({ type: "password", name: keyGenerationPasswordName })
-            ])
-          ])
-
-          formField([
-          formControl([
-            label({ class: "radio" }, [
-              input({ type: "radio", name: keyGenerationModeName, value: keyGenerationModeOneTimeValue }),
-              "I do only want to generate a one-time key."
-            ])
-          ])
-        ])
- */
