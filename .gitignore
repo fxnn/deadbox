@@ -1,31 +1,13 @@
-# Created by .ignore support plugin (hsz.mobi)
 ### Project-specific
 *.boltdb*
 *.pem
 
-### JetBrains template
-# For this project, we don't want to commit any IDE-specific files
-.idea
 
-## File-based project format:
-*.iws
+### IntelliJ
+*.iml
+/.idea
 
-## Plugin-specific files:
 
-# IntelliJ
-/out/
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
 ### Go template
 # Binaries for programs and plugins
 *.exe
