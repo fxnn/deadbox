@@ -1,7 +1,8 @@
 # Deadbox
 
-Access data and devices in your private network without Dynamic DNS, port opening etc.
+A dead letter box for your data.
 
+Access data and devices in your private network without Dynamic DNS, port opening etc.
 A program in your private network connects to an internet-accessible server, ready to receive encrypted and authorized requests.
 
 [![Build Status](https://travis-ci.org/fxnn/deadbox.svg?branch=master)](https://travis-ci.org/fxnn/deadbox)
@@ -18,11 +19,11 @@ A program in your private network connects to an internet-accessible server, rea
 When a user wants to access his private data from the internet, he currently has two possibilities:
 * Either he uses a public cloud, like Google Drive, Microsoft OneDrive etc.
   This forces the user to _always_ store his data on foreign servers.
-  He is not able to control who may access these data, as no popular (free of charge) cloud provider has support for encryption.
+  He is **not able to control** who may access these data, as no popular (free of charge) cloud provider has support for encryption.
 * Or he runs a private cloud (ownCloud, Nextcloud) on NAS devices.
   This forces the user to open a port to his private network behind a public DNS name, inducing a severe security risk.
   Security holes in the router, operating system or application software allow an attacker to enter the users private network and data.
-  The risk of such a security hole is high, as Dynamic DNS and private clouds rely on a broad interface and many different technologies.
+  The **risk of such a security hole is high**, as Dynamic DNS and private clouds rely on a broad interface and many different technologies.
 
 Having a way of remotely accessing private data,
 without neither storing them on foreign servers nor opening up one's private network using large interfaces,
@@ -31,40 +32,48 @@ would significantly improve security of all parts of the private network.
 ### Approach
 _Deadbox_ is an application that combines the concepts of peer to peer and 
 message bus to establish communication between public and private networks.
-It consists of two parts: _workers_ and _drops_.
-* The worker runs on devices in your private network and connects to the
-  drop,
+It consists of two parts: _Workers_ and _Drops_.
+* The Worker runs on devices in your private network and connects to the
+  Drop,
   which is located on a machine somewhere publicly available.
-* The user accesses the drop through a web-based UI,
+* The User accesses the Drop through a **web-based UI**,
   sending usecase based requests like "search for a file by name" or
   "upload a file".
-  The drop stores the requests in a queue.
-* The worker requests all items in his queue from the drop,
-  processes them and sends the answers back to the drop.
-  From there, they can be requested by the user's UI.
-* All requests and respones are end-to-end encrypted.
-  The drop stores the worker's certified public keys, while the user only needs short-lived key pairs.
+  The Drop stores the requests in a queue.
+  The Worker requests all items in his queue from the Drop,
+  processes them and sends the answers back to the Drop.
+  From there, they can be requested by the User's UI.
+* All requests and respones are **end-to-end encrypted**.
+  The Drop cannot read them.
+  Though the Drop stores the Worker's certified public keys, 
+  the User doesn't need to trust the Drop, as he needs to know the public
+  key's fingerprint (it's the Worker's connection id).
+  Thus, a secure connection setup is possible.
+* The User's UI runs in the web browser and is therefore easily available.
+  While the browser needs to be trusted, the server delivering the webapp
+  remains untrusted, as we allow for the webapp's easy verification. 
 
 ### Advantages
-The user's experience is similar to that of a typical cloud application.
+The User's experience is similar to that of a typical cloud application.
 He uploads and downloads files or accesses other functionality through a comfortable web-based UI.
 
 Still, the system provides more security, due to the following reasons.
 * The private network provides no interface vulnerable to probing techniques like port scanning.
 * The private network exposes a very small interface, protected through well-known authentication techniques.
-  It is additionally protected through the server, who won't process unauthenticated requests.
-* The publicly available drop does not store unencrypted private data at all.
-  The data stored by the drop are deleted after request completion or within a configurable timeout.
-  Therefore, attacking the servers data storage will not allow to access private information.
-* Communication with the private network may only happen via the drop,
+  It is additionally protected through the Drop, who won't process unauthenticated requests.
+* The publicly available Drop does not store unencrypted private data at all.
+  The data stored by the Drop are deleted after request completion or within a configurable timeout.
+  Therefore, attacking the Drop's data storage will not allow to access private information.
+* Communication with the private network may only happen via the Drop,
   which therefore acts as a shield against DoS or bruteforce attacks.
-  The availability of the drop might be in risk, but the private network is secured.
+  The availability of the Drop might be in risk, but the private network is secured.
+* The webapp can be trusted, as it's carefully engineered and easily verified.
 
-By combining worker and drop in one single binary and adding some basic routing,
-a peer to peer network emerges, allowing to combine workers from different 
+By combining Worker and Drop in one single binary and adding some basic routing,
+a peer to peer network emerges, allowing to combine Workers from different 
 private networks using tree-like or even rather random structures.
-One deadbox instance could serve as worker and drop at the same time, loading
-requests from foreign drops, providing them to other workers.
+One _deadbox_ instance could serve as worker and drop at the same time, loading
+requests from foreign Drops, providing them to other Workers.
 
 This offers a high flexibility in retrieving data and sending commands from/to
 private devices.
@@ -75,7 +84,7 @@ the _deadbox_ suffers under limited availability and increased configuration
 effort.
 * The service is only available when the devices in the private network are on
   and connected.
-  However, this could be circumvented by letting the drop not only store the
+  However, this could be circumvented by letting the Drop not only store the
   encrypted requests, but also the encrypted responses for some limited time.
   Of course, this is not feasible in all use cases and, in any case, leads
   to possibly high latency.
@@ -85,13 +94,16 @@ effort.
   subscription base.
 
 ### Challenges
-* While the worker needs to open the connection to the drop,
-  the drop must be able to push requests to the worker, so that the user won't 
+* The JavaScript webapp needs to be carefully engineered, so that no malware
+  can be injected into the code.
+  Also, the means of verification must be very simple and effective.
+* While the Worker needs to open the connection to the Drop,
+  the Drop must be able to push requests to the worker, so that the user won't 
   experience a high latency.
-  Similarly, the worker must be able to push his responses back to the drop and
+  Similarly, the Worker must be able to push his responses back to the Drop and
   thus to the user.
-* When thinking about authentication, it is clear that the worker should not 
-  need to trust the drop.
+* When thinking about authentication, it is clear that the Worker should not 
+  need to trust the Drop.
   Otherwise, in terms of security, the drop would be a single point of failure.
   Instead, it would be better if both could rely on a common third party for 
   establishing authentication, as it is possible with e.g. OpenID.
@@ -130,26 +142,27 @@ However, it is subject to change, and some points might be of quite low priority
 ### Security
 
 * Drop secures its REST interface using TLS.
-  If the worker cannot establish a trust chain for the drops
+  If the Worker cannot establish a trust chain for the drops
   certificate, [Public Key Pinning](https://developer.mozilla.org/en-US/docs/Web/HTTP/Public_Key_Pinning)
   might be an option.
-* When we want the Worker to authentificate against the drop, it could
-  use client certificates while connecting with TLS.
 * The Worker provides a public key to the Drop.
   The key pair could be generated on first startup.
 * When the User wants to send a request to a Worker, he identifies the
   Worker using a unique identifier.
   * The identifier must be pre-known to the user, the Drop should not
-    provide a list of known workers, which makes it harder to find
+    provide a list of known Workers, which makes it harder to find
     vulnerable endpoints.
   * The identifier _equals the public key fingerprint_.
-    This makes identiy spoofing harder and allows the user to trust
-    that the Worker he connects to is the one he actually expects.
-* User retrieves the Worker's public key from the Drop and encrypts
-  requests to the Worker therewith.
-  The key is authenticated against the Worker's id (see above).
-* User includes its own public key in its requests to the Worker, which
-  in turn encrypts responses therewith.
+    This makes identiy spoofing harder and allows the User to trust
+    that the Worker he connects to is the one he actually expects,
+    without needing to trust the Drop.
+* User retrieves the Worker's public key from the Drop, verifies it against
+  the Worker's identifier and uses it to establish a symmetric session key
+  with the Worker.
+* Both requests and responses between User and Worker are now fully
+  encrypted.
+  Neither the Drop, nor a man in the middle attacker are able to read
+  the data.
 
 ### Command Line Interface
 
