@@ -12,16 +12,16 @@ matrix:
       # HINT: this is only for interest -- decision to support new versions is made manually
 
 before_install:
-  - go get -t -v ./...
+  - go get -t -v ./server/...
   - go get github.com/pierrre/gotestcover
 
 script:
   # webapp build
   - npm -C webapp install && npm -C webapp run build
   # do regular coverage
-  - gotestcover -v -covermode=count -coverprofile=coverage.intrapackage.txt ./...
+  - gotestcover -v -covermode=count -coverprofile=coverage.intrapackage.txt ./server/...
   # do coverage for all packages and tests in `it` package
-  - go test -covermode=count -coverprofile=coverage.it.txt -coverpkg=./... ./it
+  - go test -covermode=count -coverprofile=coverage.it.txt -coverpkg=./server/... ./server/it
   # HINT: report merging is done by codecov.io script
 
 after_success:
